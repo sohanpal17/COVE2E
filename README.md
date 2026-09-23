@@ -89,8 +89,6 @@ Copy `backend/.env.example` → `backend/.env`:
 | `JWT_SECRET`, `JWT_EXPIRE_MINUTES` | Demo auth. |
 | `DEMO_MODE`, `APP_ENV`, `CORS_ORIGINS`, `UPLOAD_DIR`, `MAX_UPLOAD_MB` | App behaviour. |
 
-No Claude/Anthropic keys are used anywhere.
-
 ## 6. Local setup (fastest path)
 
 ```bash
