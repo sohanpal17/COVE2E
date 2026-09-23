@@ -1,0 +1,30 @@
+SURAKSHA GENERAL INSURANCE COMPANY LIMITED
+HEALTH INSURANCE CLAIM FORM
+PART A - To be filled by the insured
+
+Claimant Details
+Policy Number: SGI-HLT-2026-104821
+Policyholder Name: Rohan Mehta
+Patient Name: Ramesh Mehta
+Relationship to policyholder: Father
+Contact Number: +91 98XXXXXX21
+Email: rohan.mehta@example.com
+
+Hospitalisation Details
+Hospital Name: City Care Multispeciality Hospital, Pune
+Date of Admission: 10/09/2026
+Date of Discharge: 14/09/2026
+Nature of illness: Acute community-acquired pneumonia
+Claim Type: Reimbursement
+Total Amount Claimed: Rs. 67,800
+
+Bank Details for Settlement
+Account Holder: Rohan Mehta
+Bank: State Bank of India
+Account Number: XXXXXX4471
+IFSC: SBIN0001234
+
+Declaration
+I hereby declare that the information furnished above is true and correct.
+Signature: Rohan Mehta
+Date: 16/09/2026

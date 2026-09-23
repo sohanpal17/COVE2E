@@ -1,0 +1,341 @@
+{
+  "name": "COVE2E Document Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cove2e-document",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "c0ve2e00-0003-4000-8000-000000000003"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c3e2f8a4-0003-4c1a-9a03-00000000c001",
+              "leftValue": "={{ $json.headers['x-cove2e-secret'] }}",
+              "rightValue": "={{ $env.COVE2E_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"error\": \"invalid secret\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000003",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic validation of the document payload.\nconst body = $('Webhook').first().json.body || {};\nconst docs = Array.isArray(body.documents) ? body.documents : [];\n\nlet valid = true;\nlet error = null;\n\nif (docs.length === 0) {\n  valid = false;\n  error = 'no documents supplied';\n} else {\n  const bad = docs.find(d => String(d.validation_status || '').toUpperCase() === 'INVALID');\n  if (bad) {\n    valid = false;\n    error = `document ${bad.file_name || bad.document_id} has validation_status INVALID`;\n  }\n  const missingType = docs.find(d => !d.document_type && !body.document_type);\n  if (!bad && missingType) {\n    valid = false;\n    error = `document ${missingType.file_name || missingType.document_id} has no document_type`;\n  }\n}\n\nreturn [{\n  json: {\n    ok: valid,\n    valid,\n    error,\n    document_count: docs.length,\n    document_types: docs.map(d => d.document_type || body.document_type)\n  }\n}];"
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000004",
+      "name": "Validate Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c3e2f8a4-0003-4c1a-9a03-00000000c002",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000005",
+      "name": "Documents Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, run_id: $execution.id, workflow: 'COVE2E Document Workflow', error: $json.error, steps: [ { key: 'validate', label: 'Validating document', status: 'FAILED', detail: $json.error } ] }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000006",
+      "name": "Respond Validation Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per document so the HTTP node attaches each one.\nconst body = $('Webhook').first().json.body || {};\nconst docs = Array.isArray(body.documents) ? body.documents : [];\nconst backend_url = body.backend_url || $env.COVE2E_BACKEND_URL;\n\nreturn docs.map(d => ({\n  json: {\n    document_id: d.document_id,\n    document_type: d.document_type || body.document_type,\n    file_name: d.file_name,\n    external_claim_id: body.external_claim_id,\n    backend_url\n  }\n}));"
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000007",
+      "name": "Split Documents",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backend_url }}/mock-insurer/claims/{{ $json.external_claim_id }}/documents",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ document_type: $json.document_type, file_name: $json.file_name, document_id: $json.document_id }) }}",
+        "options": {}
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000008",
+      "name": "Attach Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collapse the per-document responses into one item.\nconst items = $input.all();\nreturn [{\n  json: {\n    attached_count: items.length,\n    attached: items.map(i => i.json)\n  }\n}];"
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000009",
+      "name": "Collect Attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Webhook').first().json.body.backend_url || $env.COVE2E_BACKEND_URL }}/mock-insurer/claims/{{ $('Webhook').first().json.body.external_claim_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000010",
+      "name": "Get Claim",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assemble the response contract.\nconst body = $('Webhook').first().json.body || {};\nconst validation = $('Validate Document').first().json;\nconst attach = $('Collect Attachments').first().json;\nconst snapshot = $input.first().json || {};\n\nconst steps = [\n  {\n    key: 'validate',\n    label: 'Validating document',\n    status: 'DONE',\n    detail: `${validation.document_count} document(s) checked: ${(validation.document_types || []).join(', ')}`\n  },\n  {\n    key: 'attach',\n    label: 'Attaching document',\n    status: 'DONE',\n    detail: `${attach.attached_count} document(s) attached to ${body.external_claim_id}`\n  },\n  {\n    key: 'snapshot',\n    label: 'Fetching insurer status',\n    status: 'DONE',\n    detail: `Status ${snapshot.status || 'UNKNOWN'}`\n  }\n];\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: $execution.id,\n    workflow: 'COVE2E Document Workflow',\n    action_id: body.action_id,\n    journey_id: body.journey_id,\n    claim_id: body.claim_id,\n    external_claim_id: body.external_claim_id,\n    steps,\n    snapshot\n  }\n}];"
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000011",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000012",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1980, 100]
+    },
+    {
+      "parameters": {
+        "content": "## COVE2E Document Workflow\nAttaches one or more validated documents to an existing insurer claim (no resubmission).\n\nSteps: Validating document -> Attaching document (POST .../documents per document) -> Fetching insurer status (GET claim).",
+        "height": 200,
+        "width": 420
+      },
+      "id": "c3e2f8a4-0003-4c1a-9a03-000000000013",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 40]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Validate Document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Document": {
+      "main": [
+        [
+          {
+            "node": "Documents Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Documents Valid?": {
+      "main": [
+        [
+          {
+            "node": "Split Documents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Validation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Documents": {
+      "main": [
+        [
+          {
+            "node": "Attach Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Document": {
+      "main": [
+        [
+          {
+            "node": "Collect Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Attachments": {
+      "main": [
+        [
+          {
+            "node": "Get Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Claim": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "cove2e-document-v1",
+  "meta": {
+    "instanceId": "cove2e-local"
+  }
+}

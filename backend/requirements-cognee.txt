@@ -1,0 +1,4 @@
+# Optional: install to enable the Cognee policy knowledge layer.
+#   pip install -r requirements-cognee.txt
+# The application runs without it using LocalPolicyKnowledgeService.
+cognee>=0.1.30

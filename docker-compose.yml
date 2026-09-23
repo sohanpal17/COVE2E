@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cove2e-postgres
+    environment:
+      POSTGRES_USER: cove2e
+      POSTGRES_PASSWORD: cove2e
+      POSTGRES_DB: cove2e
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cove2e"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    container_name: cove2e-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://cove2e:cove2e@postgres:5432/cove2e
+      SARVAM_API_KEY: ${SARVAM_API_KEY:-}
+      COGNEE_API_KEY: ${COGNEE_API_KEY:-}
+      COGNEE_ENABLED: ${COGNEE_ENABLED:-false}
+      N8N_BASE_URL: http://n8n:5678
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET:-change-me-n8n-secret}
+      BACKEND_PUBLIC_URL: http://backend:8000
+      JWT_SECRET: ${JWT_SECRET:-change-me-jwt-secret}
+      DEMO_MODE: "true"
+      CORS_ORIGINS: http://localhost:5173,http://localhost:4173,http://localhost:3000
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - ./mock-data:/mock-data:ro
+      - backend_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: cove2e-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: cove2e-n8n
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "false"
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: Asia/Kolkata
+      COVE2E_BACKEND_URL: http://backend:8000
+      COVE2E_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET:-change-me-n8n-secret}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/workflows:ro
+
+volumes:
+  pgdata:
+  backend_uploads:
+  n8n_data:

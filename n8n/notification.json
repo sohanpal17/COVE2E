@@ -1,0 +1,245 @@
+{
+  "name": "COVE2E Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cove2e-notification",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "c0ve2e00-0004-4000-8000-000000000004"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "d4f3a9b5-0004-4c1a-9a04-00000000c001",
+              "leftValue": "={{ $json.headers['x-cove2e-secret'] }}",
+              "rightValue": "={{ $env.COVE2E_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"error\": \"invalid secret\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000003",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic message composition from document_types. No LLM here.\nconst body = $('Webhook').first().json.body || {};\n\nconst LABELS = {\n  MEDICAL_CERTIFICATE: 'medical certificate',\n  DISCHARGE_SUMMARY: 'discharge summary',\n  HOSPITAL_BILL: 'hospital bill',\n  PRESCRIPTION: 'prescription',\n  DIAGNOSTIC_REPORT: 'diagnostic report',\n  ID_PROOF: 'ID proof',\n  POLICY_COPY: 'policy copy',\n  CLAIM_FORM: 'signed claim form',\n  FIR_COPY: 'FIR copy',\n  DRIVING_LICENSE: 'driving licence',\n  RC_COPY: 'vehicle registration certificate',\n  REPAIR_ESTIMATE: 'repair estimate',\n  REPAIR_INVOICE: 'repair invoice',\n  SURVEY_REPORT: 'survey report',\n  PHOTOS: 'damage photos',\n  BANK_DETAILS: 'bank details',\n  CANCELLED_CHEQUE: 'cancelled cheque'\n};\n\nfunction humanize(t) {\n  const key = String(t || '').toUpperCase();\n  return LABELS[key] || key.toLowerCase().replace(/_/g, ' ');\n}\n\nlet types = Array.isArray(body.document_types) ? body.document_types : [];\nif (types.length === 0 && body.document_type) types = [body.document_type];\nif (types.length === 0 && Array.isArray(body.documents)) {\n  types = body.documents.map(d => d.document_type).filter(Boolean);\n}\n\nconst humanTypes = [...new Set(types.map(humanize))];\nconst claimRef = body.claim_number || body.external_claim_id || '';\n\nlet message;\nif (body.message) {\n  message = body.message;\n} else if (humanTypes.length > 0) {\n  message = `Please upload: ${humanTypes.join(', ')}` + (claimRef ? ` for claim ${claimRef}.` : '.');\n} else {\n  message = `There is an update on your claim${claimRef ? ' ' + claimRef : ''}. Please open COVE2E to continue.`;\n}\n\nreturn [{\n  json: {\n    channel: 'IN_APP',\n    subject: claimRef ? `Action needed on claim ${claimRef}` : 'Action needed on your claim',\n    message,\n    document_types: types,\n    journey_id: body.journey_id,\n    claim_id: body.claim_id,\n    action_id: body.action_id,\n    composed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000004",
+      "name": "Compose Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.COVE2E_NOTIFICATION_PROVIDER_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.COVE2E_NOTIFICATION_PROVIDER_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ subject: $json.subject, message: $json.message, journey_id: $json.journey_id, claim_id: $json.claim_id }) }}",
+        "options": {}
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000005",
+      "name": "Send Notification (provider placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200],
+      "disabled": true,
+      "notes": "Disabled placeholder. Point COVE2E_NOTIFICATION_PROVIDER_URL at an email/SMS provider and enable this node to send for real. While disabled the composed message passes straight through."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d4f3a9b5-0004-4c1a-9a04-00000000s001",
+              "name": "delivery_status",
+              "value": "QUEUED_IN_APP",
+              "type": "string"
+            },
+            {
+              "id": "d4f3a9b5-0004-4c1a-9a04-00000000s002",
+              "name": "delivered_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000006",
+      "name": "Mark Sent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nconst composed = $('Compose Notification').first().json;\nconst sent = $input.first().json || {};\n\nconst steps = [\n  {\n    key: 'compose',\n    label: 'Composing notification',\n    status: 'DONE',\n    detail: composed.message\n  },\n  {\n    key: 'send',\n    label: 'Sending notification',\n    status: 'DONE',\n    detail: `Delivered via ${composed.channel} (${sent.delivery_status || 'QUEUED'})`\n  }\n];\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: $execution.id,\n    workflow: 'COVE2E Notification',\n    action_id: body.action_id,\n    journey_id: body.journey_id,\n    claim_id: body.claim_id,\n    steps,\n    message: composed.message,\n    subject: composed.subject,\n    channel: composed.channel,\n    document_types: composed.document_types,\n    snapshot: null\n  }\n}];"
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000007",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000008",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1320, 200]
+    },
+    {
+      "parameters": {
+        "content": "## COVE2E Notification\nBuilds a user-facing message from `document_types` (e.g. \"Please upload: medical certificate\") and returns it to the backend, which shows it in the app.\n\nThe provider HTTP node is disabled on purpose; enable it and set COVE2E_NOTIFICATION_PROVIDER_URL / _TOKEN to send via email or SMS.",
+        "height": 220,
+        "width": 440
+      },
+      "id": "d4f3a9b5-0004-4c1a-9a04-000000000009",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 20]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Compose Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Notification (provider placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Notification (provider placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Mark Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Sent": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "cove2e-notification-v1",
+  "meta": {
+    "instanceId": "cove2e-local"
+  }
+}

@@ -1,0 +1,16 @@
+CITY CARE MULTISPECIALITY HOSPITAL
+Pune, Maharashtra
+DISCHARGE SUMMARY
+
+Patient Name: Ramesh Mehta
+Age / Sex: 68 / M
+UHID: CCH-00921
+Date of Admission: 12/09/2026
+Date of Discharge: 14/09/2026
+Treating Doctor: Dr. Anil Kulkarni (MD, Internal Medicine)
+Diagnosis: Acute community-acquired pneumonia
+
+Presenting Complaints: Fever, productive cough and breathlessness for 3 days.
+Course in Hospital: Admitted through emergency. Started on IV antibiotics, oxygen support and nebulisation. Improved clinically. Oxygen weaned off.
+Condition at Discharge: Stable, afebrile, maintaining saturation on room air.
+Advice on Discharge: Oral antibiotics for 5 days, follow-up after 7 days.

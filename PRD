@@ -1,0 +1,2979 @@
+# COVE2E
+
+## Coverage End-to-End
+
+### Product Requirements Document
+
+**Hackathon:** Paytm Build for AI Hackathon
+**Primary Track:** AI-Powered Financial Journeys
+**Product Type:** AI-powered insurance journey teammate
+**Status:** Hackathon MVP / Prototype
+**Primary Platform:** Web Application
+**Backend:** FastAPI + Python
+**AI / Knowledge:** LLM + Cognee
+**Workflow Automation:** n8n
+**Indian Language AI:** Sarvam AI
+**Database:** PostgreSQL
+
+---
+
+# 1. Executive Summary
+
+COVE2E, meaning **Coverage End-to-End**, is an AI-powered insurance journey teammate designed to help customers understand, use, and recover their insurance journeys.
+
+Insurance experiences are fragmented across policy documents, insurer portals, claim systems, document requirements, customer-support channels, and manual processes.
+
+A customer may understand that they have insurance but still struggle to determine:
+
+* What their policy actually covers
+* Whether an incident may be covered
+* What documents are required
+* Why a claim is stuck
+* What information is missing
+* What action needs to be taken next
+* Whether an insurer query has been resolved
+* Whether a submitted action actually changed the claim state
+
+COVE2E brings these interactions into one continuous AI-powered journey.
+
+The core product promise is:
+
+> **When your insurance journey gets stuck, COVE2E finds out why and helps get it moving again.**
+
+COVE2E is not designed as a generic insurance chatbot.
+
+The conversation is only the interface.
+
+The actual product is an **insurance journey intelligence and recovery system** that maintains awareness of:
+
+* User context
+* Insurance policies
+* Policy terms
+* Coverage
+* Exclusions
+* Waiting periods
+* Limits
+* Deductibles
+* Claim requirements
+* Uploaded documents
+* Claim status
+* Insurer queries
+* Journey state
+* Outstanding actions
+* Previous actions
+* Recovery attempts
+
+The central operating loop is:
+
+```text
+UNDERSTAND
+     ↓
+INVESTIGATE
+     ↓
+REASON
+     ↓
+POLICY / ACTION GATE
+     ↓
+EXECUTE
+     ↓
+VERIFY
+     ↓
+UPDATE JOURNEY
+     ↓
+RESOLVE / ESCALATE
+```
+
+This allows COVE2E to move beyond answering insurance questions and actively help recover blocked journeys.
+
+---
+
+# 2. Hackathon Context
+
+COVE2E is being developed for the **Paytm Build for AI Hackathon** under the **AI-Powered Financial Journeys** problem area.
+
+The product addresses the problem of making complex insurance journeys simpler, faster, and more actionable through AI.
+
+The solution focuses on two complementary capabilities:
+
+### A. Insurance Intelligence
+
+Helping customers understand:
+
+* Insurance options
+* Their existing policies
+* Coverage
+* Exclusions
+* Waiting periods
+* Claim requirements
+* Policy-specific conditions
+
+### B. Insurance Journey Recovery
+
+Helping customers when a journey becomes blocked or requires additional action.
+
+Examples:
+
+* Missing documents
+* Incorrect or inconsistent documents
+* Pending insurer queries
+* Incomplete claim information
+* Claims waiting for customer action
+* Claims stuck at a particular workflow stage
+* Conflicting claim/document states
+
+COVE2E investigates the available information, identifies the likely blockage, determines the appropriate permitted action, executes the action where possible, verifies the resulting state, and escalates when autonomous recovery is unsafe or unavailable.
+
+---
+
+# 3. Problem Statement
+
+## 3.1 Current Problem
+
+Insurance is usually treated as a product purchase rather than a continuous customer journey.
+
+The journey can involve:
+
+```text
+Need Insurance
+      ↓
+Compare Policies
+      ↓
+Purchase
+      ↓
+Receive Policy
+      ↓
+Understand Coverage
+      ↓
+Policy Remains Active
+      ↓
+Incident Happens
+      ↓
+Determine Coverage
+      ↓
+Start Claim
+      ↓
+Collect Documents
+      ↓
+Submit Claim
+      ↓
+Document Verification
+      ↓
+Insurer Queries
+      ↓
+Additional Information
+      ↓
+Under Review
+      ↓
+Resolution
+```
+
+At multiple points, the customer may not know what is happening or what they are expected to do.
+
+The most problematic situation occurs when the journey becomes **blocked**.
+
+For example:
+
+> "My claim has been stuck for eight days. What am I supposed to do?"
+
+A conventional chatbot may explain the general claim process.
+
+COVE2E instead attempts to determine:
+
+```text
+What is the current claim state?
+        +
+What has already been completed?
+        +
+What documents exist?
+        +
+What requirements remain?
+        +
+Was a query raised?
+        +
+What is blocking progress?
+        ↓
+What action can safely recover the journey?
+```
+
+---
+
+# 4. Core Product Insight
+
+The central insight behind COVE2E is:
+
+> **Customers should not have to become insurance experts or workflow investigators to use their insurance.**
+
+The AI should understand both:
+
+1. **What the policy says**
+2. **What is happening in the customer's journey**
+
+This allows COVE2E to answer not only:
+
+> "Is hospitalization covered?"
+
+but also:
+
+> "Why hasn't my claim moved?"
+
+and:
+
+> "What needs to happen next?"
+
+and, where permitted:
+
+> "I found the missing requirement. I can help complete the recovery step."
+
+---
+
+# 5. Product Vision
+
+Create an AI teammate that stays with the customer throughout their insurance journey and actively helps move blocked journeys toward resolution.
+
+COVE2E should:
+
+1. Understand the user.
+2. Understand the user's policy.
+3. Understand the user's current situation.
+4. Identify the active insurance journey.
+5. Understand the current journey state.
+6. Identify completed and incomplete steps.
+7. Investigate blockers.
+8. Determine the next appropriate action.
+9. Apply deterministic safety and authorization rules.
+10. Execute permitted actions.
+11. Verify the outcome.
+12. Update the journey state.
+13. Escalate when autonomous recovery is not appropriate.
+
+---
+
+# 6. Product Structure
+
+COVE2E consists of two major product areas.
+
+```text
+COVE2E
+│
+├── Insurance Discovery & Comparison
+│
+└── My Insurance
+      │
+      ├── Policy Intelligence
+      ├── Policy Companion
+      ├── Incident Understanding
+      ├── Claims
+      ├── Document Intelligence
+      ├── Journey Recovery
+      └── Claim Tracking
+```
+
+## 6.1 Insurance Discovery & Comparison
+
+This is a separate application page.
+
+It helps users understand their insurance needs and compare available insurance products.
+
+It is not the primary differentiator of the product.
+
+Capabilities include:
+
+* Need analysis
+* Insurance-type identification
+* Policy comparison
+* Coverage comparison
+* Premium comparison
+* Deductible comparison
+* Major exclusions
+* Waiting periods
+* Limits
+* Network availability
+* Important conditions
+
+COVE2E should explain why an option may fit the user's stated requirements rather than claiming that one policy is universally "best."
+
+---
+
+## 6.2 My Insurance
+
+The main COVE2E experience is the customer's existing insurance lifecycle.
+
+It includes:
+
+* Policy Intelligence
+* Policy Q&A
+* Incident Understanding
+* Claim Management
+* Document Intelligence
+* Claim Readiness
+* Journey Investigation
+* Journey Recovery
+* Claim Tracking
+
+---
+
+# 7. Core Product Promise
+
+COVE2E combines four customer-facing capabilities:
+
+### 1. DISCOVER
+
+Understand insurance needs and compare available policies.
+
+### 2. UNDERSTAND
+
+Convert the user's policy documents into an understandable and searchable policy knowledge base.
+
+### 3. USE
+
+Help the customer understand what their insurance means in real-world situations.
+
+### 4. RECOVER
+
+When an insurance journey becomes blocked, investigate the cause, determine the permitted recovery action, execute it where possible, verify the outcome, and escalate when required.
+
+The strongest differentiator is the fourth capability.
+
+---
+
+# 8. Target Users
+
+## Primary User
+
+An individual consumer who:
+
+* Wants to purchase insurance
+* Already owns an insurance policy
+* Does not fully understand their policy
+* Needs help using their coverage
+* Needs to file a claim
+* Has an ongoing claim
+* Has missing documents
+* Has received an insurer query
+* Has a claim that appears stuck
+
+## Example User Profiles
+
+### Profile A: New Insurance Buyer
+
+Needs help understanding:
+
+* Coverage
+* Premium
+* Deductible
+* Exclusions
+* Waiting periods
+
+Uses the separate Insurance Discovery & Comparison page.
+
+### Profile B: Existing Policyholder
+
+Owns insurance but rarely reads the policy.
+
+Needs answers about:
+
+* Coverage
+* Limits
+* Exclusions
+* Waiting periods
+* Network hospitals
+* Claim procedures
+
+### Profile C: User Experiencing an Incident
+
+Example:
+
+> "My father was hospitalized yesterday. What should I do?"
+
+COVE2E identifies the relevant policy and insurance journey.
+
+### Profile D: User With a Stuck Claim
+
+Example:
+
+> "My claim has been stuck for eight days."
+
+COVE2E investigates the claim state and identifies the blocker.
+
+### Profile E: User Responding to an Insurer Query
+
+Example:
+
+> "The insurer asked for another medical certificate. What does that mean?"
+
+COVE2E explains the request, updates the journey checklist, and helps the user complete the required action.
+
+---
+
+# 9. Product Principles
+
+## 9.1 Policy-Specific
+
+Responses should be grounded in the user's actual policy whenever possible.
+
+## 9.2 Journey-Aware
+
+The AI must understand the customer's current journey state.
+
+## 9.3 Action-Oriented
+
+The system should identify what needs to happen next.
+
+## 9.4 Recovery-Oriented
+
+When a journey is blocked, COVE2E should attempt to identify and resolve the blocker.
+
+## 9.5 Persistent Context
+
+Relevant policy, document, claim, and journey information should remain available throughout the journey.
+
+## 9.6 Transparent
+
+The system should distinguish between:
+
+* Policy facts
+* User-provided information
+* AI interpretation
+* Inferred information
+* General guidance
+* External insurer decisions
+
+## 9.7 No False Certainty
+
+COVE2E must not guarantee:
+
+* Claim approval
+* Claim rejection
+* Payout amount
+* Settlement time
+* Insurer decisions
+
+## 9.8 Controlled Autonomy
+
+The AI may reason about actions, but financial or irreversible authority must not be delegated blindly to the LLM.
+
+---
+
+# 10. High-Level Product Architecture
+
+```text
+                         COVE2E
+                            │
+                            ▼
+                    Flutter Application
+                            │
+                            ▼
+                    FastAPI Backend
+                            │
+             ┌──────────────┼──────────────┐
+             │              │              │
+             ▼              ▼              ▼
+        AI Agent Layer   PostgreSQL     Auth / APIs
+             │
+     ┌───────┼────────┐
+     │       │        │
+     ▼       ▼        ▼
+  Cognee    LLM     Sarvam
+     │
+     ▼
+Policy Knowledge
+     │
+     └──────────────┐
+                    ▼
+             Journey State
+                    │
+                    ▼
+          Investigation Engine
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+   Claim/Document       Policy Context
+       State                 │
+          └─────────┬─────────┘
+                    ▼
+               AI Reasoning
+                    │
+                    ▼
+            Policy / Action Gate
+                    │
+             ┌──────┴──────┐
+             ▼             ▼
+        Permitted       Unsafe /
+         Action         Uncertain
+             │             │
+             ▼             ▼
+            n8n          Human
+             │          Escalation
+             ▼
+       Mock Insurer
+             │
+             ▼
+       Outcome Verifier
+             │
+             ▼
+      Updated Journey State
+```
+
+---
+
+# 11. Technology Stack
+
+## Frontend
+
+**React**
+
+Used for:
+
+* Web application
+* Onboarding
+* Insurance Discovery
+* Policy dashboard
+* AI conversation
+* Document upload
+* Claim journey
+* Journey recovery
+* Claim tracking
+* Notifications
+
+---
+
+## Backend
+
+**FastAPI + Python**
+
+Responsible for:
+
+* REST APIs
+* Authentication
+* Business logic
+* Policy processing
+* Claim processing
+* AI orchestration
+* Journey-state management
+* Recovery logic
+* Database communication
+* Workflow triggers
+
+---
+
+## Database
+
+**PostgreSQL**
+
+Stores:
+
+* Users
+* Policies
+* Insurance products
+* Policy metadata
+* Claims
+* Documents
+* Journey states
+* Action items
+* Claim states
+* Recovery attempts
+* Notifications
+* Audit records
+
+---
+
+# 12. Sponsor Technology Integration
+
+Sponsor technologies should be used because they solve actual product problems.
+
+---
+
+## 12.1 Cognee
+
+### Role: Policy Intelligence and Knowledge Layer
+
+Cognee is used to create a connected knowledge representation from insurance documents and related information.
+
+Input:
+
+* Policy PDFs
+* Policy terms
+* Brochures
+* Claim procedures
+* FAQs
+* Policy-specific documents
+
+Knowledge relationships:
+
+```text
+Policy
+ ↓
+Coverage
+ ↓
+Conditions
+ ↓
+Exclusions
+ ↓
+Waiting Period
+ ↓
+Limits
+ ↓
+Required Evidence
+ ↓
+Claim Procedure
+```
+
+COVE2E uses this knowledge to ground policy-specific reasoning.
+
+Example:
+
+> "Is cataract surgery covered?"
+
+COVE2E retrieves the relevant policy information rather than relying solely on generic LLM knowledge.
+
+---
+
+# 13. n8n
+
+### Role: Workflow Execution Layer
+
+n8n executes repeatable and approved workflows.
+
+Examples:
+
+* Missing-document notification
+* Claim status polling
+* Document-processing pipeline
+* Claim resubmission
+* Insurer query workflow
+* Escalation workflow
+* User notification
+* Mock insurer API interaction
+
+The architecture separates reasoning from execution.
+
+```text
+LLM
+ ↓
+Proposed Action
+ ↓
+Policy / Action Gate
+ ↓
+Approved
+ ↓
+n8n
+ ↓
+Execution
+```
+
+The LLM does not directly control financial or irreversible actions.
+
+---
+
+# 14. Sarvam AI
+
+### Role: Indian Language and Voice Interface
+
+Sarvam AI can support:
+
+* Hindi
+* Marathi
+* English
+* Voice input
+* Voice output
+* Translation
+* Multilingual policy explanations
+
+The underlying policy knowledge and journey state remain consistent regardless of language.
+
+---
+
+# 15. Core COVE2E Modules
+
+The system consists of:
+
+```text
+1. Insurance Discovery & Comparison
+2. Policy Intelligence
+3. Policy Companion
+4. Incident Understanding
+5. Claim Agent
+6. Document Intelligence
+7. Claim Readiness
+8. Journey State Engine
+9. Journey Investigation Engine
+10. Recovery Engine
+11. Policy / Action Gate
+12. Workflow Executor
+13. Outcome Verifier
+14. Human Escalation
+15. Claim Tracking
+```
+
+---
+
+# 16. Module 1: Insurance Discovery & Comparison
+
+## Objective
+
+Help users understand their insurance needs and compare available products.
+
+### Inputs
+
+* Age
+* Family situation
+* Occupation
+* Assets
+* Existing coverage
+* Budget
+* Risk requirements
+* Insurance type
+
+### Output
+
+A structured comparison:
+
+* Coverage
+* Premium
+* Deductible
+* Major exclusions
+* Waiting periods
+* Limits
+* Network availability
+* Important conditions
+
+### Important Limitation
+
+COVE2E should not claim:
+
+> "This is the best policy."
+
+Instead:
+
+> "This option matches the requirements you provided because..."
+
+This module remains a separate page from the core journey-recovery experience.
+
+---
+
+# 17. Module 2: Policy Intelligence
+
+After purchase or policy upload, COVE2E processes the user's policy.
+
+### Extract
+
+* Policy type
+* Policy number
+* Insurer
+* Coverage
+* Sum insured
+* Premium
+* Policy period
+* Deductibles
+* Waiting periods
+* Exclusions
+* Limits
+* Conditions
+* Claim process
+* Required documents
+
+### Output
+
+A structured policy profile.
+
+Example:
+
+```text
+MY HEALTH POLICY
+
+Coverage
+₹10,00,000
+
+Policy Period
+01 Jan 2026 – 31 Dec 2026
+
+Waiting Period
+30 days
+
+Room Rent
+₹5,000/day
+
+Deductible
+₹10,000
+
+Claim Type
+Cashless / Reimbursement
+```
+
+---
+
+# 18. Module 3: Policy Companion
+
+The user can ask natural-language questions about their own policy.
+
+Examples:
+
+> "Is ICU covered?"
+
+> "What is my room rent limit?"
+
+> "Do I have a waiting period?"
+
+> "What happens if I go to a non-network hospital?"
+
+> "Is dental treatment covered?"
+
+> "When does my policy expire?"
+
+Responses should use policy-specific context.
+
+Recommended response structure:
+
+```text
+ANSWER
+
+Coverage:
+Yes / No / Conditional
+
+Why:
+Relevant policy information
+
+Important condition:
+...
+
+What you should do:
+...
+```
+
+---
+
+# 19. Module 4: Incident Understanding
+
+This is the transition from passive policy management to active insurance assistance.
+
+The user describes what happened.
+
+Examples:
+
+> "I was hospitalized."
+
+> "My car was hit while parked."
+
+> "My phone was stolen."
+
+> "I had an accident."
+
+COVE2E identifies:
+
+* Incident type
+* Relevant insurance type
+* Relevant policy
+* Urgency
+* Potential journey
+* Required information
+* Potential next actions
+
+Example:
+
+```text
+USER
+"My car was hit while parked."
+
+        ↓
+
+INCIDENT
+Motor accident
+
+        ↓
+
+POLICY
+Motor insurance
+
+        ↓
+
+JOURNEY
+Claim
+
+        ↓
+
+NEXT ACTIONS
+1. Capture evidence
+2. Record incident details
+3. Check policy coverage
+4. Prepare documents
+5. Initiate claim
+```
+
+---
+
+# 20. Module 5: Claim Agent
+
+The Claim Agent manages the claim journey.
+
+## Stage 1: Incident Capture
+
+Collect:
+
+* Date
+* Time
+* Location
+* Incident description
+* Affected asset
+* People involved
+* Photos/videos
+* Relevant documents
+
+## Stage 2: Coverage Understanding
+
+Check:
+
+* Coverage
+* Exclusions
+* Limits
+* Deductibles
+* Waiting periods
+* Conditions
+
+## Stage 3: Claim Type
+
+Identify:
+
+* Cashless
+* Reimbursement
+* Own-damage
+* Third-party
+* Health claim
+* Motor claim
+* Gadget claim
+* Other supported claim type
+
+## Stage 4: Document Checklist
+
+Generate a dynamic checklist based on:
+
+* Policy
+* Incident
+* Claim type
+* Insurer
+* Journey state
+
+---
+
+# 21. Module 6: Document Intelligence
+
+COVE2E should understand uploaded documents rather than simply store them.
+
+### Capabilities
+
+* OCR
+* Document classification
+* Key-value extraction
+* Date extraction
+* Entity extraction
+* Document completeness
+* Cross-document comparison
+* Missing information detection
+* Inconsistency detection
+
+Example:
+
+```text
+Document A:
+Admission Date: 10 September
+
+Document B:
+Admission Date: 12 September
+```
+
+COVE2E identifies:
+
+> Potential inconsistency: admission dates differ.
+
+It must not conclude that the claim is invalid.
+
+Instead:
+
+> "Please verify the correct admission date before submission."
+
+---
+
+# 22. Module 7: Claim Readiness
+
+Claim Readiness evaluates whether the information and documentation available to COVE2E are sufficient for the next stage.
+
+Example:
+
+```text
+CLAIM READINESS
+
+78%
+
+✓ Policy identified
+✓ Claim form completed
+✓ Hospital bill uploaded
+✓ Discharge summary uploaded
+
+⚠ Doctor certificate missing
+⚠ Admission date mismatch
+
+NEXT ACTION
+
+Resolve the 2 outstanding issues.
+```
+
+The readiness percentage is a **documentation/process completeness indicator**.
+
+It is not:
+
+* Probability of approval
+* Probability of payout
+* Insurer decision prediction
+
+---
+
+# 23. Module 8: Journey State Engine
+
+The Journey State Engine maintains the current state of the customer's insurance journey.
+
+Example:
+
+```text
+POLICY ACTIVE
+      ↓
+INCIDENT DETECTED
+      ↓
+CLAIM STARTED
+      ↓
+DOCUMENT COLLECTION
+      ↓
+READINESS CHECK
+      ↓
+SUBMISSION
+      ↓
+UNDER REVIEW
+      ↓
+QUERY RAISED
+      ↓
+QUERY RESOLUTION
+      ↓
+CLAIM RESOLUTION
+```
+
+For every journey, the system maintains:
+
+```text
+Current State
++
+User Context
++
+Policy Context
++
+Documents
++
+Outstanding Requirements
++
+Previous Actions
++
+External Status
++
+Recovery Attempts
+```
+
+This becomes the foundation for autonomous recovery.
+
+---
+
+# 24. Module 9: Journey Investigation Engine
+
+This is one of the primary COVE2E differentiators.
+
+When the user reports that something is stuck, COVE2E does not immediately provide generic advice.
+
+It investigates the available state.
+
+Example:
+
+> "Why is my claim stuck?"
+
+COVE2E checks:
+
+```text
+Claim State
+      +
+Latest Insurer Query
+      +
+Required Documents
+      +
+Uploaded Documents
+      +
+Document Validation
+      +
+Journey Timeline
+      +
+Previous Actions
+      +
+Policy Requirements
+```
+
+It then identifies the likely blocker.
+
+Example:
+
+```text
+CURRENT STATE
+Document Verification
+
+BLOCKER
+Required medical certificate missing
+
+EVIDENCE
+Insurer requested certificate
+3 days ago.
+
+NEXT ACTION
+Obtain and submit certificate.
+```
+
+---
+
+# 25. Module 10: Recovery Engine
+
+The Recovery Engine converts an identified blocker into a recovery plan.
+
+Example:
+
+```text
+BLOCKER
+Missing medical certificate
+
+        ↓
+
+RECOVERY PLAN
+
+1. Request certificate
+2. Receive document
+3. Validate document
+4. Attach document to claim
+5. Resubmit / notify insurer
+6. Verify claim state
+```
+
+Another example:
+
+```text
+BLOCKER
+Document inconsistency
+
+        ↓
+
+RECOVERY PLAN
+
+1. Identify conflicting values
+2. Ask user to confirm correct information
+3. Update claim information
+4. Re-run readiness validation
+5. Continue workflow
+```
+
+The recovery engine should distinguish between:
+
+### Automatically Recoverable
+
+Safe, authorized, reversible workflow actions.
+
+### User Confirmation Required
+
+Actions involving sensitive information, submission, or external communication.
+
+### Human Escalation Required
+
+Cases involving ambiguity, conflicting states, unsupported actions, or decisions that COVE2E is not authorized to make.
+
+---
+
+# 26. Module 11: Policy / Action Gate
+
+The Policy / Action Gate is the safety and authorization layer between AI reasoning and execution.
+
+The LLM can propose an action.
+
+It does not have unrestricted authority to execute that action.
+
+```text
+AI Reasoning
+     ↓
+Proposed Action
+     ↓
+Policy / Action Gate
+     ↓
+ ┌───┼──────────┐
+ ▼   ▼          ▼
+Safe  Confirm   Escalate
+ │      │          │
+ ▼      ▼          ▼
+n8n   User       Human
+```
+
+The Action Gate checks:
+
+* Is the action supported?
+* Is it allowed?
+* Is the required information available?
+* Does it require user confirmation?
+* Is the action reversible?
+* Does it involve sensitive information?
+* Does it require insurer authority?
+* Is the system state consistent?
+
+This prevents the LLM from becoming the final authority for financial or insurance decisions.
+
+---
+
+# 27. Module 12: Workflow Executor
+
+Approved actions are executed through n8n.
+
+Example:
+
+```text
+Approved Action
+      ↓
+n8n Workflow
+      ↓
+Mock Insurer API
+      ↓
+Action Result
+```
+
+Possible actions:
+
+* Send notification
+* Request document
+* Attach document
+* Update claim metadata
+* Trigger claim resubmission
+* Notify user
+* Poll claim status
+* Create escalation ticket
+
+---
+
+# 28. Module 13: Outcome Verifier
+
+This is another major differentiator.
+
+COVE2E should not assume that an action succeeded merely because the workflow returned successfully.
+
+After execution, the system checks whether the actual journey state changed.
+
+Example:
+
+```text
+EXECUTE
+
+Attach medical certificate
+        ↓
+Workflow successful
+        ↓
+VERIFY CLAIM STATE
+        ↓
+Claim still DOCUMENT_PENDING?
+        │
+       YES
+        ↓
+Investigate again / escalate
+
+        OR
+
+Claim changed to UNDER_REVIEW
+        ↓
+SUCCESS
+        ↓
+Update Journey State
+```
+
+The fundamental loop becomes:
+
+```text
+Observe
+   ↓
+Reason
+   ↓
+Gate
+   ↓
+Execute
+   ↓
+Verify
+   ↓
+Update
+   ↓
+Repeat / Resolve / Escalate
+```
+
+---
+
+# 29. Module 14: Human Escalation
+
+COVE2E should escalate when:
+
+* Backend states conflict
+* Required information is ambiguous
+* An action is outside the system's authority
+* The insurer must make a decision
+* The user disputes a policy interpretation
+* Recovery attempts fail
+* The workflow enters an unsupported state
+
+Example:
+
+```text
+CLAIM STATE
+
+Payment:
+Completed
+
+Claim:
+Approved
+
+Settlement:
+Pending
+
+System:
+Conflicting / unresolved state
+```
+
+COVE2E should not invent a resolution.
+
+Instead:
+
+```text
+ESCALATE
+
+Reason:
+Conflicting external states
+
+Evidence:
+...
+
+Actions already attempted:
+...
+
+Recommended human action:
+Investigate settlement status
+```
+
+---
+
+# 30. Claim Recovery Example
+
+The complete recovery flow:
+
+```text
+USER
+
+"My claim has been stuck for 8 days."
+
+        ↓
+
+COVE2E INVESTIGATES
+
+Policy
+Claim
+Documents
+Queries
+Timeline
+Previous Actions
+
+        ↓
+
+ROOT CAUSE
+
+Medical certificate requested
+but not submitted.
+
+        ↓
+
+RECOVERY PLAN
+
+Collect certificate
+        ↓
+Validate certificate
+        ↓
+Attach to claim
+        ↓
+Resubmit
+
+        ↓
+
+ACTION GATE
+
+Action permitted
+        ↓
+n8n execution
+
+        ↓
+
+OUTCOME VERIFIER
+
+Check claim status
+
+        ↓
+
+STATUS CHANGED
+
+DOCUMENT_PENDING
+        ↓
+UNDER_REVIEW
+
+        ↓
+
+COVE2E
+
+"Your claim has been unblocked
+and is now under review."
+```
+
+---
+
+# 31. Claim Submission
+
+For the hackathon MVP, claim submission is simulated through a mock insurer environment.
+
+COVE2E prepares:
+
+* Claim information
+* Document package
+* Evidence
+* Incident details
+* Checklist status
+
+Then:
+
+```text
+COVE2E
+   ↓
+Claim Package
+   ↓
+Action Gate
+   ↓
+User Confirmation
+   ↓
+n8n
+   ↓
+Mock Insurer API
+   ↓
+Claim ID
+   ↓
+Tracking
+```
+
+---
+
+# 32. Claim Tracking
+
+After submission, the dashboard displays:
+
+```text
+CLAIM #CLM-10284
+
+✓ Claim initiated
+✓ Documents submitted
+✓ Documents verified
+● Under review
+○ Decision
+○ Resolution
+```
+
+The user can ask:
+
+> "What's happening with my claim?"
+
+COVE2E explains:
+
+* Current state
+* What has already happened
+* What is pending
+* Whether user action is required
+* What the next step is
+
+---
+
+# 33. Insurer Query Handling
+
+If an insurer requests additional information:
+
+```text
+INSURER QUERY
+
+"Please provide additional
+medical certificate."
+```
+
+COVE2E:
+
+1. Understands the request.
+2. Explains what it means.
+3. Identifies why the request matters where the available information supports that explanation.
+4. Adds it to the journey checklist.
+5. Identifies whether the required document exists.
+6. Helps obtain or upload it.
+7. Validates the document.
+8. Executes the permitted next workflow.
+9. Verifies the resulting claim state.
+
+---
+
+# 34. AI Agent Architecture
+
+COVE2E uses specialized capabilities rather than relying on one giant prompt.
+
+```text
+                    COVE2E AI
+                        │
+       ┌────────────────┼────────────────┐
+       ▼                ▼                ▼
+ Policy Intelligence  Claim Agent   Journey Agent
+       │                │                │
+       └────────────────┼────────────────┘
+                        ▼
+               Investigation Engine
+                        │
+                        ▼
+                  Reasoning Layer
+                        │
+                        ▼
+                Action / Policy Gate
+                        │
+              ┌─────────┴─────────┐
+              ▼                   ▼
+             n8n               Human
+          Execution           Escalation
+              │
+              ▼
+        Mock Insurer
+              │
+              ▼
+        Outcome Verifier
+              │
+              ▼
+       Journey State Update
+```
+
+---
+
+# 35. Policy Knowledge Model
+
+Each policy is represented conceptually as:
+
+```text
+POLICY
+│
+├── Insurer
+├── Policy Type
+├── Policy Period
+├── Coverage
+│   ├── Coverage A
+│   ├── Coverage B
+│   └── Coverage C
+│
+├── Limits
+├── Deductibles
+├── Waiting Periods
+├── Exclusions
+├── Conditions
+├── Claim Types
+├── Required Documents
+└── Claim Procedure
+```
+
+Cognee provides the connected knowledge layer behind these relationships.
+
+---
+
+# 36. Journey State Model
+
+A journey should contain information such as:
+
+```text
+{
+  "user": "USER_ID",
+  "policy": "POLICY_ID",
+  "journey": "HEALTH_CLAIM",
+  "state": "DOCUMENT_VERIFICATION",
+
+  "required_documents": [
+    "policy_document",
+    "identity_proof",
+    "hospital_bill",
+    "discharge_summary",
+    "doctor_certificate"
+  ],
+
+  "completed_documents": [
+    "policy_document",
+    "identity_proof",
+    "hospital_bill",
+    "discharge_summary"
+  ],
+
+  "missing_documents": [
+    "doctor_certificate"
+  ],
+
+  "issues": [
+    "missing_doctor_certificate"
+  ],
+
+  "current_blocker": "missing_doctor_certificate",
+
+  "next_action": "collect_document",
+
+  "recovery_status": "pending"
+}
+```
+
+The actual implementation can evolve according to the MVP architecture.
+
+---
+
+# 37. User Journey A: Insurance Discovery
+
+```text
+Open COVE2E
+      ↓
+Insurance Discovery
+      ↓
+Tell AI what coverage is needed
+      ↓
+AI asks relevant questions
+      ↓
+Available options
+      ↓
+Compare
+      ↓
+Select
+      ↓
+Purchase / simulated purchase
+      ↓
+Policy imported
+      ↓
+Policy Intelligence created
+      ↓
+My Insurance Dashboard
+```
+
+---
+
+# 38. User Journey B: Existing Policy
+
+```text
+Upload Policy
+      ↓
+Policy Processing
+      ↓
+Policy Intelligence Created
+      ↓
+Coverage Dashboard
+      ↓
+Ask Questions
+      ↓
+Policy-Specific Answers
+```
+
+---
+
+# 39. User Journey C: New Claim
+
+```text
+Something Happens
+      ↓
+Tell COVE2E
+      ↓
+Incident Understanding
+      ↓
+Relevant Policy
+      ↓
+Potential Coverage
+      ↓
+Start Claim
+      ↓
+Dynamic Checklist
+      ↓
+Upload Documents
+      ↓
+Document Analysis
+      ↓
+Claim Readiness
+      ↓
+Resolve Issues
+      ↓
+Prepare Claim
+      ↓
+User Confirmation
+      ↓
+Submit
+      ↓
+Track
+```
+
+---
+
+# 40. User Journey D: Stuck Claim Recovery
+
+This is the primary COVE2E differentiator.
+
+```text
+User
+
+"My claim is stuck."
+
+      ↓
+
+Journey State Retrieved
+      ↓
+Investigation Engine
+      ↓
+Check:
+- Claim status
+- Documents
+- Insurer queries
+- Timeline
+- Policy requirements
+- Previous actions
+
+      ↓
+
+Root Cause Identified
+      ↓
+Recovery Plan
+      ↓
+Action / Policy Gate
+      ↓
+User Confirmation if required
+      ↓
+n8n Execution
+      ↓
+Outcome Verification
+      ↓
+Journey State Updated
+      ↓
+Resolved / Continue / Escalate
+```
+
+---
+
+# 41. Dashboard
+
+The home dashboard should provide:
+
+## My Coverage
+
+* Active policies
+* Expiry dates
+* Coverage
+* Major limits
+
+## Current Journeys
+
+Example:
+
+```text
+Motor Claim
+70% complete
+```
+
+## Action Required
+
+Example:
+
+```text
+1 document required
+```
+
+## Journey Health
+
+Example:
+
+```text
+Claim Status
+Under Review
+
+No action currently required
+```
+
+## Ask COVE2E
+
+Primary conversational interface.
+
+## Important Dates
+
+* Policy expiry
+* Renewal
+* Waiting period milestones
+* Claim deadlines where applicable
+
+---
+
+# 42. AI Conversation Interface
+
+The conversation should not be a blank generic chatbot.
+
+It should be contextual.
+
+Example:
+
+```text
+Good morning.
+
+Your health policy expires in 42 days.
+
+You also have an active motor claim.
+
+Your motor claim is currently waiting
+for an additional document.
+
+What would you like to work on?
+```
+
+Suggested actions:
+
+* Understand my policy
+* Start a claim
+* Check claim readiness
+* Find missing documents
+* Track my claim
+* Recover my stuck claim
+* Compare insurance
+
+---
+
+# 43. Multilingual Experience
+
+Supported languages:
+
+* English
+* Hindi
+* Marathi
+
+Example:
+
+```text
+English
+
+"Why is my claim stuck?"
+
+        ↓
+
+Sarvam AI
+
+        ↓
+
+Marathi
+
+"माझा क्लेम का अडकला आहे?"
+```
+
+The underlying:
+
+* Policy knowledge
+* Journey state
+* Claim state
+* Recovery logic
+
+remain language-independent.
+
+---
+
+# 44. Notifications
+
+n8n may trigger notifications for:
+
+### Missing Document
+
+> "Your claim is missing the doctor's certificate."
+
+### Claim Status
+
+> "Your claim has moved to document verification."
+
+### Recovery Action
+
+> "COVE2E found that your claim is waiting for an additional document."
+
+### Recovery Completed
+
+> "Your claim has moved from document verification to under review."
+
+### Policy Expiry
+
+> "Your health policy expires in 30 days."
+
+### Insurer Query
+
+> "An additional document has been requested for your claim."
+
+---
+
+# 45. Security and Privacy
+
+Insurance information is sensitive.
+
+The system should implement:
+
+* Secure authentication
+* Encrypted document storage
+* Controlled document access
+* User-specific policy isolation
+* Minimal collection of personal data
+* Secure API communication
+* Role-based backend access
+* Audit logging
+* No sharing of policy documents between users
+
+For the hackathon prototype, production-grade controls can be represented architecturally even where complete infrastructure is not implemented.
+
+---
+
+# 46. AI Safety and Reliability
+
+COVE2E must not:
+
+* Guarantee claim approval
+* Guarantee payout
+* Fabricate policy coverage
+* Invent claim requirements
+* Make insurer decisions
+* Represent assumptions as policy facts
+* Silently modify user documents
+* Submit claims without appropriate authorization
+* Execute unauthorized financial actions
+* Treat an LLM response as authoritative evidence
+
+The AI should distinguish between:
+
+### Policy Fact
+
+> "Your policy states..."
+
+### AI Interpretation
+
+> "Based on the available policy information..."
+
+### Missing Information
+
+> "I cannot determine this because..."
+
+### External Decision
+
+> "The insurer will make the final claim decision."
+
+### Recovery Decision
+
+> "COVE2E identified this as the current journey blocker based on the available claim state and requirements."
+
+---
+
+# 47. Human-in-the-Loop
+
+Certain actions require explicit user confirmation.
+
+Examples:
+
+* Purchasing insurance
+* Submitting a claim
+* Sending sensitive documents
+* Sharing sensitive information
+* Accepting a financial product
+* Sending an insurer response
+
+Other cases require human escalation:
+
+* Conflicting external states
+* Unsupported workflows
+* Ambiguous policy conditions
+* Failed recovery attempts
+* Insurer-authority decisions
+
+COVE2E should provide the human with:
+
+```text
+Problem
++
+Evidence
++
+Current State
++
+Actions Already Attempted
++
+Reason for Escalation
+```
+
+---
+
+# 48. Mock Data for Hackathon
+
+The hackathon prototype should use a controlled demo environment.
+
+## Mock Insurance Catalogue
+
+```text
+Health Insurance A
+Health Insurance B
+Motor Insurance A
+Motor Insurance B
+```
+
+## Mock Policy Documents
+
+Include:
+
+* Coverage
+* Exclusions
+* Waiting periods
+* Limits
+* Claim requirements
+* Conditions
+
+## Mock Claim System
+
+Simulate:
+
+* Claim submission
+* Document verification
+* Missing documents
+* Insurer query
+* Stuck claim
+* Recovery action
+* Status update
+* Resolution
+* Conflicting state
+
+---
+
+# 49. Primary Demo Scenario
+
+The strongest demo should focus on **journey recovery**.
+
+## Stage 1: Existing Policy
+
+User has an existing health insurance policy uploaded into COVE2E.
+
+Cognee creates the policy knowledge base.
+
+---
+
+## Stage 2: Incident
+
+User:
+
+> "My father was hospitalized yesterday."
+
+COVE2E identifies the health insurance journey.
+
+---
+
+## Stage 3: Claim
+
+COVE2E creates a dynamic claim checklist.
+
+The user uploads available documents.
+
+---
+
+## Stage 4: Claim Submission
+
+The user confirms submission.
+
+n8n sends the claim to the mock insurer.
+
+---
+
+## Stage 5: Claim Becomes Stuck
+
+The mock insurer changes the claim state to:
+
+```text
+DOCUMENT_PENDING
+```
+
+An insurer query exists:
+
+```text
+"Please provide the medical certificate."
+```
+
+---
+
+## Stage 6: User Returns
+
+User:
+
+> "My claim has been stuck for eight days."
+
+---
+
+## Stage 7: Investigation
+
+COVE2E investigates:
+
+```text
+Policy ✓
+Claim State ✓
+Documents ✓
+Insurer Query ✓
+Timeline ✓
+Previous Actions ✓
+```
+
+It determines:
+
+```text
+ROOT CAUSE
+
+Medical certificate requested
+but not submitted.
+```
+
+---
+
+## Stage 8: Recovery
+
+COVE2E creates:
+
+```text
+RECOVERY PLAN
+
+1. Obtain medical certificate
+2. Validate document
+3. Attach document
+4. Submit recovery action
+5. Verify claim state
+```
+
+---
+
+## Stage 9: Action Gate
+
+COVE2E checks whether the action is permitted.
+
+If user confirmation is required:
+
+> "I have prepared the recovery action. Confirm to submit the document."
+
+---
+
+## Stage 10: Execution
+
+n8n executes the mock workflow.
+
+```text
+Document Attached
+      ↓
+Claim Resubmitted
+```
+
+---
+
+## Stage 11: Verification
+
+COVE2E checks the claim state.
+
+Before:
+
+```text
+DOCUMENT_PENDING
+```
+
+After:
+
+```text
+UNDER_REVIEW
+```
+
+---
+
+## Stage 12: Resolution
+
+COVE2E tells the user:
+
+> "Your claim was waiting for the medical certificate. The document has been submitted and the claim is now under review."
+
+This demonstrates:
+
+```text
+OBSERVE
+   ↓
+INVESTIGATE
+   ↓
+REASON
+   ↓
+GATE
+   ↓
+ACT
+   ↓
+VERIFY
+   ↓
+UPDATE
+```
+
+That is the core COVE2E demonstration.
+
+---
+
+# 50. Secondary Demo Scenarios
+
+The prototype can include additional deterministic scenarios.
+
+## Scenario A: Missing Document
+
+```text
+Claim
+ ↓
+Missing Document
+ ↓
+Detect
+ ↓
+Request
+ ↓
+Upload
+ ↓
+Validate
+ ↓
+Verify
+```
+
+## Scenario B: Document Inconsistency
+
+```text
+Two documents
+      ↓
+Conflicting admission dates
+      ↓
+Detect
+      ↓
+Ask user to confirm
+      ↓
+Update information
+      ↓
+Re-run readiness
+```
+
+## Scenario C: Conflicting External State
+
+```text
+Claim:
+Approved
+
+Settlement:
+Pending
+
+Payment:
+Completed
+
+      ↓
+
+Conflict detected
+      ↓
+No autonomous action
+      ↓
+Human escalation
+```
+
+This demonstrates that COVE2E does not blindly execute actions whenever an LLM produces a plausible-sounding answer.
+
+---
+
+# 51. Key Differentiator
+
+The differentiator is not simply:
+
+> "AI for insurance."
+
+It is the combination of:
+
+```text
+Persistent Policy Knowledge
+          +
+User Context
+          +
+Journey State
+          +
+Document Intelligence
+          +
+Journey Investigation
+          +
+Recovery Planning
+          +
+Policy / Action Gate
+          +
+Workflow Execution
+          +
+Outcome Verification
+          +
+Human Escalation
+```
+
+This allows COVE2E to move from:
+
+> **"Ask me anything about insurance."**
+
+to:
+
+> **"I understand where your insurance journey is, why it is blocked, what can safely be done next, and whether that action actually worked."**
+
+---
+
+# 52. Why COVE2E Is Different From a Generic Chatbot
+
+### Generic Chatbot
+
+```text
+Question
+   ↓
+LLM
+   ↓
+Answer
+```
+
+### COVE2E
+
+```text
+User
+ ↓
+Current Situation
+ ↓
+Relevant Policy
+ ↓
+Policy Knowledge
+ ↓
+Journey State
+ ↓
+Documents
+ ↓
+External Claim State
+ ↓
+Investigation
+ ↓
+Reasoning
+ ↓
+Action / Policy Gate
+ ↓
+Workflow
+ ↓
+Outcome Verification
+ ↓
+Updated Journey State
+ ↓
+Resolution / Escalation
+```
+
+The conversation is therefore only the interface.
+
+The actual product is the **insurance journey intelligence and recovery system underneath it.**
+
+---
+
+# 53. MVP Scope
+
+The MVP should demonstrate depth rather than support every insurance type.
+
+## Insurance Types
+
+* Health Insurance
+* Motor Insurance
+
+## Core Functionality
+
+### Insurance Discovery
+
+* Need analysis
+* Policy comparison
+* Product information
+
+### Policy Intelligence
+
+* Policy upload
+* Policy parsing
+* Policy Q&A
+* Coverage extraction
+* Exclusion extraction
+* Waiting-period extraction
+
+### Claim
+
+* Incident detection
+* Claim initiation
+* Dynamic document checklist
+* Document upload
+* Document analysis
+* Claim readiness
+* Issue detection
+* Claim package generation
+* Mock claim submission
+* Claim tracking
+
+### Journey Recovery
+
+* Stuck-journey detection
+* Journey investigation
+* Root-cause identification
+* Recovery-plan generation
+* Action / Policy Gate
+* n8n execution
+* Outcome verification
+* Journey-state update
+* Human escalation
+
+### Language
+
+* English
+* Hindi
+* Marathi
+
+---
+
+# 54. Future Extensions
+
+These should not be necessary for the MVP.
+
+* Real insurer integrations
+* Real policy purchase
+* Real claim submission
+* Live hospital network lookup
+* Additional insurance types
+* Real-time insurer communication
+* Automatic renewal assistance
+* Family-wide insurance management
+* Proactive coverage-gap analysis
+* Voice-first interaction
+* Wearable/health integrations
+* Broader financial journey integration
+* More autonomous recovery workflows
+* Multi-insurer journey orchestration
+
+---
+
+# 55. Out of Scope for MVP
+
+The following should not be attempted unless time permits:
+
+* Building a real insurance underwriting engine
+* Making actual insurer claim decisions
+* Guaranteeing claim approval
+* Real-world claim settlement
+* Replacing insurers
+* Providing legal advice
+* Fully automating irreversible financial transactions without authorization
+* Supporting every insurance product in India
+* Building direct integrations with multiple real insurers
+
+---
+
+# 56. Success Metrics for Hackathon MVP
+
+## Policy Understanding
+
+* Policy information extraction accuracy
+* Policy Q&A accuracy
+* Grounded response rate
+* Correct policy retrieval
+
+## Claim Preparation
+
+* Required-document identification
+* Missing-document detection
+* Document consistency detection
+* Claim readiness accuracy
+
+## Journey Recovery
+
+* Correct blocker identification
+* Correct recovery-plan generation
+* Successful execution of permitted actions
+* Successful outcome verification
+* Recovery completion rate
+* Escalation accuracy
+
+## Journey Efficiency
+
+* Reduction in steps required to resolve a blocked journey
+* Reduction in time required to prepare a claim
+* Number of actions automated
+* Number of journeys recovered without human intervention
+
+## AI Reliability
+
+* Hallucination rate
+* Correct journey-state detection
+* Correct next-action selection
+* Policy-grounded response rate
+* Safe-action-gate compliance
+
+---
+
+# 57. Example AI Decisions
+
+## Example 1: Hospitalization
+
+User:
+
+> "I have a fever and my doctor told me to get admitted."
+
+COVE2E:
+
+```text
+Possible Health Event
+        ↓
+Relevant Health Policy
+        ↓
+Check Hospitalization Coverage
+        ↓
+Check Waiting Period
+        ↓
+Check Network Hospital Information
+        ↓
+Explain Pre-authorisation
+        ↓
+Prepare Next Actions
+```
+
+COVE2E must not guarantee that the claim will be accepted.
+
+---
+
+## Example 2: Motor Accident
+
+User:
+
+> "My car was damaged yesterday."
+
+COVE2E:
+
+```text
+Incident Detected
+        ↓
+Motor Policy Identified
+        ↓
+Ask Incident Details
+        ↓
+Generate Evidence Checklist
+        ↓
+Identify Claim Type
+        ↓
+Prepare Claim
+```
+
+---
+
+## Example 3: Stuck Claim
+
+User:
+
+> "Why is my claim stuck?"
+
+COVE2E checks:
+
+```text
+Claim State
++
+Outstanding Requirements
++
+Latest Insurer Query
++
+Uploaded Documents
++
+Journey Timeline
++
+Previous Actions
+```
+
+Then:
+
+> "Your claim is currently waiting for the additional medical certificate requested during document verification."
+
+If the system is authorized to execute the recovery workflow, it proceeds through the Action Gate.
+
+---
+
+# 58. Example Internal Journey State
+
+```json
+{
+  "user": "USER_ID",
+  "policy": "POLICY_ID",
+  "journey": "HEALTH_CLAIM",
+  "state": "DOCUMENT_VERIFICATION",
+  "readiness": 78,
+
+  "required_documents": [
+    "policy_document",
+    "identity_proof",
+    "hospital_bill",
+    "discharge_summary",
+    "doctor_certificate"
+  ],
+
+  "completed_documents": [
+    "policy_document",
+    "identity_proof",
+    "hospital_bill",
+    "discharge_summary"
+  ],
+
+  "missing_documents": [
+    "doctor_certificate"
+  ],
+
+  "issues": [
+    "missing_doctor_certificate"
+  ],
+
+  "current_blocker": "missing_doctor_certificate",
+
+  "next_action": "collect_document",
+
+  "recovery_status": "pending"
+}
+```
+
+---
+
+# 59. Backend API Concept
+
+Example MVP endpoints:
+
+```text
+POST /auth/register
+POST /auth/login
+
+POST /policies/upload
+GET  /policies
+GET  /policies/{id}
+
+POST /chat
+POST /policy/query
+
+POST /incidents
+GET  /incidents/{id}
+
+POST /claims
+GET  /claims
+GET  /claims/{id}
+
+POST /claims/{id}/documents
+GET  /claims/{id}/documents
+
+POST /claims/{id}/readiness
+
+GET  /claims/{id}/timeline
+
+POST /claims/{id}/investigate
+GET  /claims/{id}/recovery
+
+POST /claims/{id}/recovery/approve
+POST /claims/{id}/recovery/execute
+
+POST /claims/{id}/verify
+
+POST /claims/{id}/escalate
+
+POST /notifications
+```
+
+These are conceptual MVP APIs and can be adjusted during implementation.
+
+---
+
+# 60. Frontend Screens
+
+## Onboarding
+
+* Welcome
+* User profile
+* Insurance needs
+
+## Home
+
+* Active policies
+* Current journeys
+* Action required
+* Journey status
+* AI assistant
+
+## Insurance Discovery
+
+* Need analysis
+* Available policies
+* Comparison
+* Selection
+
+## Policy Dashboard
+
+* Coverage
+* Limits
+* Exclusions
+* Waiting periods
+* Important dates
+
+## AI Assistant
+
+* Context-aware conversation
+* Suggested actions
+* Multilingual support
+
+## Claim Center
+
+* Start claim
+* Active claims
+* Claim timeline
+
+## Claim Readiness
+
+* Readiness indicator
+* Required documents
+* Missing documents
+* Detected inconsistencies
+
+## Document Center
+
+* Upload
+* View
+* Verify
+* Missing items
+
+## Journey Recovery
+
+* Current blocker
+* Investigation results
+* Recovery plan
+* Action status
+* Verification result
+
+## Claim Timeline
+
+* Current state
+* Completed steps
+* Pending steps
+* Next action
+* Recovery history
+
+---
+
+# 61. Design Philosophy
+
+COVE2E should feel:
+
+* Trustworthy
+* Calm
+* Simple
+* Professional
+* Transparent
+* Action-oriented
+
+Avoid:
+
+* Excessive financial jargon
+* Overwhelming dashboards
+* Generic chatbot appearance
+* Long text responses
+* Unexplained AI decisions
+
+Use:
+
+* Cards
+* Progress indicators
+* Checklists
+* Timelines
+* Action buttons
+* Document status
+* Clear explanations
+* Recovery-status indicators
+* Investigation summaries
+
+Insurance already produces enough paperwork-induced suffering without the UI joining in.
+
+---
+
+# 62. Primary "Wow" Moment
+
+The primary hackathon wow moment should be:
+
+### User says:
+
+> **"My claim has been stuck for 8 days."**
+
+COVE2E immediately investigates.
+
+```text
+CLAIM INVESTIGATION
+
+Policy
+✓ Identified
+
+Claim
+✓ Found
+
+Documents
+✓ Checked
+
+Insurer Query
+✓ Found
+
+Timeline
+✓ Checked
+
+Previous Actions
+✓ Checked
+```
+
+Then:
+
+```text
+ROOT CAUSE
+
+Medical certificate requested
+but not submitted.
+```
+
+COVE2E generates:
+
+```text
+RECOVERY PLAN
+
+1. Obtain medical certificate
+2. Validate document
+3. Attach to claim
+4. Submit recovery action
+5. Verify claim state
+```
+
+The Action Gate determines that the action is permitted.
+
+n8n executes the workflow.
+
+The Outcome Verifier checks the actual claim state.
+
+```text
+BEFORE
+
+DOCUMENT_PENDING
+```
+
+After verification:
+
+```text
+AFTER
+
+UNDER_REVIEW
+```
+
+COVE2E tells the user:
+
+> **"Your claim was waiting for the medical certificate. The document has been submitted and your claim is now under review."**
+
+This demonstrates that COVE2E is not merely talking about insurance.
+
+It is **investigating, recovering, executing, and verifying an insurance journey.**
+
+---
+
+# 63. Core Value Proposition
+
+## For Users
+
+> **Understand your insurance and get help when your insurance journey gets stuck.**
+
+## For Paytm
+
+> **Turn fragmented insurance interactions into one continuous AI-powered customer journey with intelligent recovery.**
+
+## For the Hackathon
+
+> **Demonstrate how AI can move from answering insurance questions to investigating blocked financial journeys, taking permitted actions, verifying outcomes, and escalating only when necessary.**
+
+---
+
+# 64. One-Line Product Definition
+
+> **COVE2E is an AI-powered insurance journey teammate that understands a user's policy, investigates blocked insurance journeys, takes permitted recovery actions, verifies outcomes, and guides the customer toward resolution.**
+
+---
+
+# 65. Short Pitch
+
+> **Insurance doesn't become complicated when you buy it. It becomes complicated when you need to use it.**
+>
+> COVE2E is an AI insurance journey teammate that understands your actual policy and knows where you are in your insurance journey.
+>
+> When something goes wrong, COVE2E investigates the policy, documents, claim state, insurer queries, and journey history to find the blocker.
+>
+> It then determines the permitted recovery action, executes it through controlled workflows, verifies that the journey actually progressed, and escalates cases it cannot safely resolve.
+>
+> **It doesn't just tell you what to do. It helps get your insurance journey moving again.**
+>
+> **COVE2E: Coverage End-to-End.**
+
+---
+
+# 66. Final Product Philosophy
+
+COVE2E should always answer four questions:
+
+### 1. What is happening?
+
+Understand the user's situation and current journey state.
+
+### 2. What does my policy say?
+
+Retrieve and interpret the relevant policy information.
+
+### 3. Why is my journey stuck?
+
+Investigate the current state, documents, requirements, queries, and previous actions.
+
+### 4. What can happen next?
+
+Determine the permitted recovery action, execute it where appropriate, verify the outcome, or escalate.
+
+The fundamental loop is:
+
+```text
+UNDERSTAND
+     ↓
+INTERPRET
+     ↓
+INVESTIGATE
+     ↓
+DECIDE
+     ↓
+GATE
+     ↓
+ACT
+     ↓
+VERIFY
+     ↓
+UPDATE JOURNEY
+     ↓
+RESOLVE / ESCALATE
+     ↓
+REPEAT
+```
+
+That loop is the heart of **COVE2E: Coverage End-to-End**.
+
+The Insurance Discovery & Comparison page provides the entry point for users who are choosing insurance.
+
+The persistent Policy Intelligence provides the knowledge layer.
+
+The Journey State Engine provides context.
+
+The Investigation Engine finds the problem.
+
+The Recovery Engine determines how to address it.
+
+The Policy / Action Gate controls what the AI is allowed to do.
+
+n8n executes the approved workflow.
+
+The Outcome Verifier confirms whether the action actually worked.
+
+And human escalation handles cases where autonomous recovery is not safe or possible.
+
+**COVE2E is therefore not simply an insurance chatbot.**
+
+**It is an AI teammate for the insurance journey.**

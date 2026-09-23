@@ -1,0 +1,25 @@
+CITY CARE MULTISPECIALITY HOSPITAL
+Pune, Maharashtra
+FINAL HOSPITAL BILL
+
+Bill No: CCH/2026/09/4471
+Patient Name: Ramesh Mehta
+Age / Sex: 68 / M
+Admission Date: 10/09/2026
+Discharge Date: 14/09/2026
+Treating Doctor: Dr. Anil Kulkarni
+Diagnosis: Acute community-acquired pneumonia
+
+Room Charges (General ward, 4 days)            Rs. 16,000
+ICU Charges (1 day)                            Rs. 9,500
+Doctor Visits                                  Rs. 6,000
+Nursing Charges                                Rs. 4,000
+Pharmacy                                       Rs. 18,340
+Investigations (X-ray, blood tests, culture)   Rs. 7,900
+Consumables                                    Rs. 3,260
+Oxygen and nebulisation                        Rs. 2,800
+
+Grand Total: Rs. 67,800
+Amount Paid: Rs. 67,800
+Payment Mode: UPI / Card
+Receipt No: RCPT-88213

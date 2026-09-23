@@ -1,0 +1,531 @@
+{
+  "name": "COVE2E Recovery (attach + resubmit)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cove2e-recovery",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 400],
+      "webhookId": "c0ve2e00-0002-4000-8000-000000000002"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000c001",
+              "leftValue": "={{ $json.headers['x-cove2e-secret'] }}",
+              "rightValue": "={{ $env.COVE2E_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"error\": \"invalid secret\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000003",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 640]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000s001",
+              "name": "action_type",
+              "value": "={{ $json.body.action_type }}",
+              "type": "string"
+            },
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000s002",
+              "name": "external_claim_id",
+              "value": "={{ $json.body.external_claim_id }}",
+              "type": "string"
+            },
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000s003",
+              "name": "backend_url",
+              "value": "={{ $json.body.backend_url || $env.COVE2E_BACKEND_URL }}",
+              "type": "string"
+            },
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000s004",
+              "name": "document_count",
+              "value": "={{ ($json.body.documents || []).length }}",
+              "type": "number"
+            },
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000s005",
+              "name": "should_attach",
+              "value": "={{ $json.body.action_type !== 'RESUBMIT_CLAIM' }}",
+              "type": "boolean"
+            },
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000s006",
+              "name": "should_resubmit",
+              "value": "={{ $json.body.action_type !== 'ATTACH_DOCUMENT' }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000004",
+      "name": "Prepare Recovery",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic validation only. Fails when attaching is required but no usable document exists.\nconst body = $('Webhook').first().json.body || {};\nconst plan = $('Prepare Recovery').first().json;\nconst docs = Array.isArray(body.documents) ? body.documents : [];\n\nlet valid = true;\nlet error = null;\n\nif (plan.should_attach) {\n  if (docs.length === 0) {\n    valid = false;\n    error = 'no documents supplied for attachment';\n  } else {\n    const bad = docs.find(d => String(d.validation_status || '').toUpperCase() === 'INVALID');\n    if (bad) {\n      valid = false;\n      error = `document ${bad.file_name || bad.document_id} has validation_status INVALID`;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ok: valid,\n    valid,\n    error,\n    document_count: docs.length,\n    document_types: docs.map(d => d.document_type),\n    should_attach: plan.should_attach,\n    should_resubmit: plan.should_resubmit\n  }\n}];"
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000005",
+      "name": "Validate Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000c002",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000006",
+      "name": "Documents Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, run_id: $execution.id, workflow: 'COVE2E Recovery (attach + resubmit)', error: $json.error, steps: [ { key: 'prepare', label: 'Preparing recovery', status: 'DONE', detail: 'Action ' + $('Webhook').first().json.body.action_type }, { key: 'validate', label: 'Validating document', status: 'FAILED', detail: $json.error } ] }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000007",
+      "name": "Respond Validation Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 520]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000c003",
+              "leftValue": "={{ $('Webhook').first().json.body.action_type }}",
+              "rightValue": "RESUBMIT_CLAIM",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000008",
+      "name": "Should Attach?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per document so the HTTP node attaches each one.\nconst body = $('Webhook').first().json.body || {};\nconst docs = Array.isArray(body.documents) ? body.documents : [];\nconst backend_url = body.backend_url || $env.COVE2E_BACKEND_URL;\n\nreturn docs.map(d => ({\n  json: {\n    document_id: d.document_id,\n    document_type: d.document_type || body.document_type,\n    file_name: d.file_name,\n    external_claim_id: body.external_claim_id,\n    backend_url\n  }\n}));"
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000009",
+      "name": "Split Documents",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backend_url }}/mock-insurer/claims/{{ $json.external_claim_id }}/documents",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ document_type: $json.document_type, file_name: $json.file_name, document_id: $json.document_id }) }}",
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000010",
+      "name": "Attach Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collapse the per-document responses into one item.\nconst items = $input.all();\nreturn [{\n  json: {\n    attached_count: items.length,\n    attached: items.map(i => i.json)\n  }\n}];"
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000011",
+      "name": "Collect Attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "b2d1e7f3-0002-4c1a-9a02-00000000c004",
+              "leftValue": "={{ $('Webhook').first().json.body.action_type }}",
+              "rightValue": "ATTACH_DOCUMENT",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000012",
+      "name": "Should Resubmit?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1980, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Prepare Recovery').first().json.backend_url }}/mock-insurer/claims/{{ $('Prepare Recovery').first().json.external_claim_id }}/resubmit",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ source: 'n8n', action_id: $('Webhook').first().json.body.action_id }) }}",
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000013",
+      "name": "Resubmit Claim",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Prepare Recovery').first().json.backend_url }}/mock-insurer/claims/{{ $('Prepare Recovery').first().json.external_claim_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000014",
+      "name": "Get Claim",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assemble steps in UI order. Branch nodes that did not run are skipped safely.\nconst body = $('Webhook').first().json.body || {};\nconst plan = $('Prepare Recovery').first().json;\nconst validation = $('Validate Document').first().json;\nconst snapshot = $input.first().json || {};\n\nfunction safe(nodeName) {\n  try { return $(nodeName).first().json; } catch (e) { return null; }\n}\n\nconst attach = plan.should_attach ? safe('Collect Attachments') : null;\nconst resubmit = plan.should_resubmit ? safe('Resubmit Claim') : null;\n\nconst steps = [\n  {\n    key: 'prepare',\n    label: 'Preparing recovery',\n    status: 'DONE',\n    detail: `Action ${body.action_type} for claim ${body.external_claim_id}`\n  },\n  {\n    key: 'validate',\n    label: 'Validating document',\n    status: 'DONE',\n    detail: plan.should_attach\n      ? `${validation.document_count} document(s) checked: ${(validation.document_types || []).join(', ') || 'none'}`\n      : 'No new documents required for resubmission'\n  }\n];\n\nif (attach) {\n  steps.push({\n    key: 'attach',\n    label: 'Attaching document',\n    status: 'DONE',\n    detail: `${attach.attached_count} document(s) attached to ${body.external_claim_id}`\n  });\n}\n\nif (resubmit) {\n  steps.push({\n    key: 'resubmit',\n    label: 'Resubmitting claim',\n    status: 'DONE',\n    detail: `Insurer status ${resubmit.status || snapshot.status || 'UNKNOWN'}`\n  });\n}\n\nsteps.push({\n  key: 'snapshot',\n  label: 'Fetching insurer status',\n  status: 'DONE',\n  detail: `Status ${snapshot.status || 'UNKNOWN'}`\n});\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: $execution.id,\n    workflow: 'COVE2E Recovery (attach + resubmit)',\n    action_id: body.action_id,\n    action_type: body.action_type,\n    journey_id: body.journey_id,\n    claim_id: body.claim_id,\n    external_claim_id: body.external_claim_id,\n    steps,\n    snapshot\n  }\n}];"
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000015",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000016",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2860, 300]
+    },
+    {
+      "parameters": {
+        "content": "## COVE2E Recovery\nHandles ATTACH_DOCUMENT, RESUBMIT_CLAIM and ATTACH_AND_RESUBMIT (any other action_type).\n\n- action_type = ATTACH_DOCUMENT: attach only, skip resubmit\n- action_type = RESUBMIT_CLAIM: skip attach, resubmit only\n- otherwise: attach every document, then resubmit\n\nValidation fails (HTTP 400, ok:false) when attaching is required and `documents` is empty or any document has validation_status INVALID.",
+        "height": 280,
+        "width": 460
+      },
+      "id": "b2d1e7f3-0002-4c1a-9a02-000000000017",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 60]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Prepare Recovery",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Recovery": {
+      "main": [
+        [
+          {
+            "node": "Validate Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Document": {
+      "main": [
+        [
+          {
+            "node": "Documents Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Documents Valid?": {
+      "main": [
+        [
+          {
+            "node": "Should Attach?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Validation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Attach?": {
+      "main": [
+        [
+          {
+            "node": "Split Documents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Should Resubmit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Documents": {
+      "main": [
+        [
+          {
+            "node": "Attach Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Document": {
+      "main": [
+        [
+          {
+            "node": "Collect Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Attachments": {
+      "main": [
+        [
+          {
+            "node": "Should Resubmit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Resubmit?": {
+      "main": [
+        [
+          {
+            "node": "Resubmit Claim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resubmit Claim": {
+      "main": [
+        [
+          {
+            "node": "Get Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Claim": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "cove2e-recovery-v1",
+  "meta": {
+    "instanceId": "cove2e-local"
+  }
+}

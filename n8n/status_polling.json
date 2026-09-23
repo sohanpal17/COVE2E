@@ -1,0 +1,370 @@
+{
+  "name": "COVE2E Status Polling & Follow-up",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cove2e-status-polling",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "c0ve2e00-0006-4000-8000-000000000006"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "f6b5c1d7-0006-4c1a-9a06-00000000c001",
+              "leftValue": "={{ $json.headers['x-cove2e-secret'] }}",
+              "rightValue": "={{ $env.COVE2E_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"error\": \"invalid secret\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000003",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 520]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "f6b5c1d7-0006-4c1a-9a06-00000000c002",
+              "leftValue": "={{ $json.body.action_type }}",
+              "rightValue": "RAISE_FOLLOW_UP",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000004",
+      "name": "Is Follow-up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.body.backend_url || $env.COVE2E_BACKEND_URL }}/mock-insurer/claims/{{ $json.body.external_claim_id }}/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.body.message || 'Requesting a status update on this claim.', requested_document_type: $json.body.document_type || null, direction: 'USER' }) }}",
+        "options": {}
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000005",
+      "name": "Raise Follow-up Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000006",
+      "name": "Schedule Trigger (every 30 min, disabled)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [440, 700],
+      "disabled": true,
+      "notes": "Disabled by default. Enable to poll the insurer every 30 minutes for the claim in COVE2E_POLL_CLAIM_ID."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resolve which claim to poll. Works for both the webhook path and the scheduled path.\nlet body = {};\ntry {\n  body = $('Webhook').first().json.body || {};\n} catch (e) {\n  body = {};\n}\n\nconst fromWebhook = Boolean(body && body.external_claim_id);\nconst backend_url = body.backend_url || $env.COVE2E_BACKEND_URL || 'http://backend:8000';\nconst external_claim_id = body.external_claim_id || $env.COVE2E_POLL_CLAIM_ID || '';\n\nif (!external_claim_id) {\n  throw new Error('external_claim_id missing. For scheduled polling set COVE2E_POLL_CLAIM_ID in the n8n environment.');\n}\n\nreturn [{\n  json: {\n    backend_url,\n    external_claim_id,\n    from_webhook: fromWebhook,\n    action_type: body.action_type || 'POLL_STATUS',\n    expected_status: body.expected_status || null\n  }\n}];"
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000007",
+      "name": "Resolve Target Claim",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.backend_url }}/mock-insurer/claims/{{ $json.external_claim_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000008",
+      "name": "Get Claim Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assemble steps in UI order.\nconst target = $('Resolve Target Claim').first().json;\nconst snapshot = $input.first().json || {};\n\nlet body = {};\ntry { body = $('Webhook').first().json.body || {}; } catch (e) { body = {}; }\n\nlet followUp = null;\ntry { followUp = $('Raise Follow-up Query').first().json; } catch (e) { followUp = null; }\n\nconst steps = [];\n\nif (followUp) {\n  steps.push({\n    key: 'follow_up',\n    label: 'Raising follow-up with insurer',\n    status: 'DONE',\n    detail: body.message ? `Sent: \"${body.message}\"` : 'Follow-up query sent to insurer'\n  });\n}\n\nconst expected = target.expected_status;\nlet detail = `Status ${snapshot.status || 'UNKNOWN'}`;\nif (snapshot.settlement_status) detail += `, settlement ${snapshot.settlement_status}`;\nif (snapshot.payment_status) detail += `, payment ${snapshot.payment_status}`;\nif (expected) detail += expected === snapshot.status ? ' (as expected)' : ` (expected ${expected})`;\n\nsteps.push({\n  key: 'poll',\n  label: 'Polling insurer status',\n  status: 'DONE',\n  detail\n});\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: $execution.id,\n    workflow: 'COVE2E Status Polling & Follow-up',\n    action_id: body.action_id || null,\n    action_type: target.action_type,\n    journey_id: body.journey_id || null,\n    claim_id: body.claim_id || null,\n    external_claim_id: target.external_claim_id,\n    from_webhook: target.from_webhook,\n    status_changed: expected ? expected !== snapshot.status : null,\n    steps,\n    snapshot\n  }\n}];"
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000009",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "f6b5c1d7-0006-4c1a-9a06-00000000c003",
+              "leftValue": "={{ $json.from_webhook }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000010",
+      "name": "Triggered by Webhook?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000011",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1760, 300]
+    },
+    {
+      "parameters": {},
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000012",
+      "name": "Scheduled Poll Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1760, 520]
+    },
+    {
+      "parameters": {
+        "content": "## COVE2E Status Polling & Follow-up\n**Webhook path (default):** the backend posts an action. If action_type = RAISE_FOLLOW_UP the workflow first POSTs .../query with direction USER, then always GETs the claim and responds with the snapshot.\n\n**Scheduled path (optional):** the disabled Schedule Trigger fires every 30 minutes and reuses the same GET. To enable it:\n1. Set COVE2E_BACKEND_URL and COVE2E_POLL_CLAIM_ID (the external claim id to poll) in the n8n environment.\n2. Enable the Schedule Trigger node and activate the workflow.\n\nScheduled runs skip the Respond to Webhook node (there is no HTTP caller) and end at \"Scheduled Poll Done\". Push results back to the backend from there if needed.",
+        "height": 340,
+        "width": 520
+      },
+      "id": "f6b5c1d7-0006-4c1a-9a06-000000000013",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, -80]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Is Follow-up?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Follow-up?": {
+      "main": [
+        [
+          {
+            "node": "Raise Follow-up Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resolve Target Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Raise Follow-up Query": {
+      "main": [
+        [
+          {
+            "node": "Resolve Target Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger (every 30 min, disabled)": {
+      "main": [
+        [
+          {
+            "node": "Resolve Target Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Target Claim": {
+      "main": [
+        [
+          {
+            "node": "Get Claim Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Claim Status": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Triggered by Webhook?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triggered by Webhook?": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scheduled Poll Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "cove2e-status-polling-v1",
+  "meta": {
+    "instanceId": "cove2e-local"
+  }
+}

@@ -1,0 +1,309 @@
+{
+  "name": "COVE2E Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cove2e-escalation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "c0ve2e00-0005-4000-8000-000000000005"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000c001",
+              "leftValue": "={{ $json.headers['x-cove2e-secret'] }}",
+              "rightValue": "={{ $env.COVE2E_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"error\": \"invalid secret\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000003",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 500]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s001",
+              "name": "reference",
+              "value": "={{ 'ESC-' + Date.now() }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s002",
+              "name": "problem",
+              "value": "={{ $json.body.message || $json.body.problem || ('Escalation requested for action ' + ($json.body.action_type || 'UNKNOWN') + ' on claim ' + ($json.body.claim_number || $json.body.external_claim_id || $json.body.claim_id || 'n/a')) }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s003",
+              "name": "journey_id",
+              "value": "={{ $json.body.journey_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s004",
+              "name": "claim_id",
+              "value": "={{ $json.body.claim_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s005",
+              "name": "claim_number",
+              "value": "={{ $json.body.claim_number }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s006",
+              "name": "external_claim_id",
+              "value": "={{ $json.body.external_claim_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s007",
+              "name": "action_id",
+              "value": "={{ $json.body.action_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s008",
+              "name": "priority",
+              "value": "HIGH",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s009",
+              "name": "status",
+              "value": "OPEN",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s010",
+              "name": "created_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000004",
+      "name": "Create Escalation Ticket",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.COVE2E_ESCALATION_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: `[COVE2E] ${$json.reference} (${$json.priority}) - ${$json.problem}`, ticket: $json }) }}",
+        "options": {}
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000005",
+      "name": "Notify Human Agent (placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200],
+      "disabled": true,
+      "notes": "Disabled placeholder. Set COVE2E_ESCALATION_WEBHOOK_URL to a Slack/Teams incoming webhook or ticketing API and enable this node. While disabled the ticket passes straight through."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s011",
+              "name": "assigned_to",
+              "value": "human-agent-queue",
+              "type": "string"
+            },
+            {
+              "id": "e5a4b0c6-0005-4c1a-9a05-00000000s012",
+              "name": "notified_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000006",
+      "name": "Mark Agent Notified",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nconst ticket = $input.first().json || {};\n\nconst steps = [\n  {\n    key: 'ticket',\n    label: 'Creating escalation ticket',\n    status: 'DONE',\n    detail: `Ticket ${ticket.reference} created (${ticket.priority})`\n  },\n  {\n    key: 'notify',\n    label: 'Notifying human agent',\n    status: 'DONE',\n    detail: `Routed to ${ticket.assigned_to}`\n  }\n];\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: $execution.id,\n    workflow: 'COVE2E Escalation',\n    action_id: body.action_id,\n    journey_id: body.journey_id,\n    claim_id: body.claim_id,\n    steps,\n    ticket,\n    snapshot: null\n  }\n}];"
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000007",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000008",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1320, 200]
+    },
+    {
+      "parameters": {
+        "content": "## COVE2E Escalation\nCreates a ticket object { reference: 'ESC-<timestamp>', problem, journey_id, claim_id, ... } and hands it to a human agent.\n\nThe agent-notification HTTP node is a disabled placeholder; enable it and set COVE2E_ESCALATION_WEBHOOK_URL to route to Slack/Teams/ticketing.",
+        "height": 200,
+        "width": 440
+      },
+      "id": "e5a4b0c6-0005-4c1a-9a05-000000000009",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 40]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Create Escalation Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Escalation Ticket": {
+      "main": [
+        [
+          {
+            "node": "Notify Human Agent (placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Human Agent (placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Mark Agent Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Agent Notified": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "cove2e-escalation-v1",
+  "meta": {
+    "instanceId": "cove2e-local"
+  }
+}

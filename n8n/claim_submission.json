@@ -1,0 +1,283 @@
+{
+  "name": "COVE2E Claim Submission",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cove2e-claim-submission",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "c0ve2e00-0001-4000-8000-000000000001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000c001",
+              "leftValue": "={{ $json.headers['x-cove2e-secret'] }}",
+              "rightValue": "={{ $env.COVE2E_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"error\": \"invalid secret\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000003",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 500]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s001",
+              "name": "claim_number",
+              "value": "={{ $json.body.claim_number }}",
+              "type": "string"
+            },
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s002",
+              "name": "policy_number",
+              "value": "={{ $json.body.policy_number }}",
+              "type": "string"
+            },
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s003",
+              "name": "product_type",
+              "value": "={{ $json.body.product_type }}",
+              "type": "string"
+            },
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s004",
+              "name": "claim_type",
+              "value": "={{ $json.body.claim_type }}",
+              "type": "string"
+            },
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s005",
+              "name": "claimed_amount",
+              "value": "={{ Number($json.body.claimed_amount || 0) }}",
+              "type": "number"
+            },
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s006",
+              "name": "documents",
+              "value": "={{ $json.body.documents || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "a1c0f6e2-0001-4c1a-9a01-00000000s007",
+              "name": "backend_url",
+              "value": "={{ $json.body.backend_url || $env.COVE2E_BACKEND_URL }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000004",
+      "name": "Prepare Claim Package",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backend_url }}/mock-insurer/claims",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ claim_number: $json.claim_number, policy_number: $json.policy_number, product_type: $json.product_type, claim_type: $json.claim_type, claimed_amount: $json.claimed_amount, documents: $json.documents }) }}",
+        "options": {}
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000005",
+      "name": "Submit Claim to Insurer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Prepare Claim Package').first().json.backend_url }}/mock-insurer/claims/{{ $json.external_claim_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COVE2E-Secret",
+              "value": "={{ $env.COVE2E_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000006",
+      "name": "Fetch Insurer Acknowledgement",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic assembly of the response contract. No reasoning here.\nconst body = $('Webhook').first().json.body || {};\nconst submitted = $('Submit Claim to Insurer').first().json || {};\nconst snapshot = $('Fetch Insurer Acknowledgement').first().json || {};\nconst docCount = Array.isArray(body.documents) ? body.documents.length : 0;\n\nconst steps = [\n  {\n    key: 'prepare',\n    label: 'Preparing claim package',\n    status: 'DONE',\n    detail: `Claim ${body.claim_number || ''} (${body.product_type || ''}/${body.claim_type || ''}), amount ${body.claimed_amount ?? ''}, ${docCount} document(s)`\n  },\n  {\n    key: 'submit',\n    label: 'Submitting claim to insurer',\n    status: 'DONE',\n    detail: `Insurer reference ${submitted.external_claim_id || 'n/a'}`\n  },\n  {\n    key: 'acknowledge',\n    label: 'Fetching insurer acknowledgement',\n    status: 'DONE',\n    detail: `Status ${snapshot.status || 'UNKNOWN'}`\n  }\n];\n\nreturn [{\n  json: {\n    ok: true,\n    run_id: $execution.id,\n    workflow: 'COVE2E Claim Submission',\n    action_id: body.action_id,\n    journey_id: body.journey_id,\n    claim_id: body.claim_id,\n    external_claim_id: submitted.external_claim_id || snapshot.external_claim_id,\n    steps,\n    snapshot\n  }\n}];"
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000007",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000008",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1320, 200]
+    },
+    {
+      "parameters": {
+        "content": "## COVE2E Claim Submission\nTriggered by the FastAPI backend after the Action Gate approves SUBMIT_CLAIM.\n\nSteps (in UI order):\n1. Preparing claim package\n2. Submitting claim to insurer (POST /mock-insurer/claims)\n3. Fetching insurer acknowledgement (GET /mock-insurer/claims/{external_claim_id})\n\nn8n only executes deterministic steps; all decisions are made by the backend.",
+        "height": 260,
+        "width": 420
+      },
+      "id": "a1c0f6e2-0001-4c1a-9a01-000000000009",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Prepare Claim Package",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Claim Package": {
+      "main": [
+        [
+          {
+            "node": "Submit Claim to Insurer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Claim to Insurer": {
+      "main": [
+        [
+          {
+            "node": "Fetch Insurer Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Insurer Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "cove2e-claim-submission-v1",
+  "meta": {
+    "instanceId": "cove2e-local"
+  }
+}

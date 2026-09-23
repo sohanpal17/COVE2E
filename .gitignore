@@ -1,0 +1,30 @@
+# Secrets
+.env
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/uploads/
+backend/*.db
+backend/cove2e.db*
+.venv/
+venv/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# n8n / docker volumes
+n8n_data/
+pgdata/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
