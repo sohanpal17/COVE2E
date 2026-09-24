@@ -45,7 +45,7 @@ const TONES: Record<string, string> = {
   green: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
   amber: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
   red: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
-  blue: 'bg-brand-50 text-brand-800 ring-1 ring-brand-200',
+  blue: 'bg-[#e8f9fd] text-[#002e6e] ring-1 ring-[#4ccfe0]/60 font-medium',
   gray: 'bg-ink-100 text-ink-700 ring-1 ring-ink-200',
   purple: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
 }
@@ -107,7 +107,7 @@ export function StatePill({ state }: { state?: string | null }) {
 }
 
 export function ProgressBar({ value, tone = 'brand', className = '' }: { value: number; tone?: 'brand' | 'green' | 'amber' | 'red'; className?: string }) {
-  const color = { brand: 'bg-brand-400', green: 'bg-emerald-500', amber: 'bg-amber-500', red: 'bg-rose-500' }[tone]
+  const color = { brand: 'bg-[#4ccfe0]', green: 'bg-emerald-500', amber: 'bg-amber-500', red: 'bg-rose-500' }[tone]
   return (
     <div className={`h-2 w-full overflow-hidden rounded-full bg-ink-100 ${className}`}>
       <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
@@ -173,12 +173,12 @@ export function StatusIcon({ status, className = 'h-4 w-4' }: { status: string; 
       return <XCircle className={`${className} text-rose-500`} />
     case 'RUNNING':
     case 'EXECUTING':
-      return <Loader2 className={`${className} animate-spin text-brand-600`} />
+      return <Loader2 className={`${className} animate-spin text-[#4ccfe0]`} />
     case 'INFO':
-      return <Info className={`${className} text-brand-500`} />
+      return <Info className={`${className} text-[#4ccfe0]`} />
     case 'READY':
     case 'CURRENT':
-      return <Circle className={`${className} fill-brand-500 text-brand-500`} />
+      return <Circle className={`${className} fill-[#4ccfe0] text-[#4ccfe0]`} />
     default:
       return <Circle className={`${className} text-ink-300`} />
   }
@@ -206,7 +206,7 @@ export function Timeline({ events }: { events: { id: string; description: string
     <ol className="relative ml-2 border-l border-ink-200">
       {events.map((e) => (
         <li key={e.id} className="mb-4 ml-4">
-          <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full border border-white bg-brand-500" />
+          <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[#4ccfe0]" />
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
             <span>{new Date(e.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
             <Badge tone="gray">{e.actor}</Badge>
@@ -235,7 +235,7 @@ export function KeyValue({ items }: { items: { k: string; v: React.ReactNode }[]
 export function StepRow({ n, label, description, status }: { n: number; label: string; description?: string; status: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${status === 'DONE' ? 'bg-emerald-500 text-white' : status === 'RUNNING' || status === 'READY' ? 'bg-brand-600 text-white' : status === 'FAILED' ? 'bg-rose-500 text-white' : status === 'PENDING_USER' ? 'bg-amber-400 text-white' : 'bg-ink-100 text-ink-600'}`}>
+      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${status === 'DONE' ? 'bg-emerald-500 text-white' : status === 'RUNNING' || status === 'READY' ? 'bg-[#4ccfe0] text-[#002e6e]' : status === 'FAILED' ? 'bg-rose-500 text-white' : status === 'PENDING_USER' ? 'bg-amber-400 text-white' : 'bg-ink-100 text-ink-600'}`}>
         {status === 'DONE' ? <Check className="h-4 w-4" /> : status === 'RUNNING' ? <Loader2 className="h-4 w-4 animate-spin" /> : n}
       </div>
       <div className="min-w-0">

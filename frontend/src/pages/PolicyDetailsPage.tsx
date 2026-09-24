@@ -119,11 +119,11 @@ export default function PolicyDetailsPage() {
           </Card>
 
           <Card>
-            <div className="-mx-5 -mt-5 mb-4 flex overflow-x-auto border-b border-ink-200 px-5">
+            <div className="-mx-5 -mt-5 mb-4 flex overflow-x-auto border-b border-ink-200 bg-ink-50/50 p-2 gap-1.5 px-5">
               {TABS.map((tb) => (
-                <button key={tb.key} onClick={() => setTab(tb.key)} className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition ${tab === tb.key ? 'border-brand-600 text-brand-700' : 'border-transparent text-ink-500 hover:text-ink-800'}`}>
+                <button key={tb.key} onClick={() => setTab(tb.key)} className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-bold transition ${tab === tb.key ? 'bg-[#4ccfe0] text-[#002e6e] shadow-xs' : 'text-ink-600 hover:bg-white hover:text-ink-900'}`}>
                   {tb.label}
-                  <span className="ml-1.5 rounded-full bg-ink-100 px-1.5 text-[10px] text-ink-600">
+                  <span className={`ml-1.5 rounded-full px-1.5 text-[10px] ${tab === tb.key ? 'bg-[#002e6e] text-white' : 'bg-ink-200 text-ink-700'}`}>
                     {tb.key === 'coverage' ? data.coverages.length : tb.key === 'exclusions' ? exclusions.length : tb.key === 'limits' ? limits.length : tb.key === 'process' ? process.length : docs.length}
                   </span>
                 </button>

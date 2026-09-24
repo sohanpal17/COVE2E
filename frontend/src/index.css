@@ -6,22 +6,22 @@
   html { @apply antialiased; }
   body { @apply bg-ink-50 text-ink-900 font-sans; }
   h1, h2, h3, h4 { @apply tracking-tight; }
-  ::selection { @apply bg-brand-200; }
+  ::selection { background-color: #4ccfe0; color: #002e6e; }
 }
 
 @layer components {
   .card { @apply bg-white rounded-xl border border-ink-200 shadow-card; }
   .card-pad { @apply p-5; }
   .label { @apply text-[11px] font-semibold uppercase tracking-wider text-ink-500; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4ccfe0] disabled:opacity-50 disabled:cursor-not-allowed; }
   .btn-primary { @apply btn shadow-sm; background-color: #4ccfe0 !important; color: #002e6e !important; font-weight: 700 !important; }
   .btn-primary:hover { background-color: #6ee0f2 !important; color: #001538 !important; }
   .btn-navy { @apply btn shadow-sm; background-color: #002e6e !important; color: #ffffff !important; font-weight: 700 !important; }
   .btn-navy:hover { background-color: #00388a !important; }
-  .btn-secondary { @apply btn bg-white border border-ink-200 text-ink-800 hover:bg-brand-50 hover:border-brand-200 hover:text-brand-800; }
-  .btn-ghost { @apply btn text-ink-700 hover:bg-brand-50 hover:text-brand-800; }
+  .btn-secondary { @apply btn bg-white border border-ink-200 text-ink-800 hover:bg-[#e8f9fd] hover:border-[#4ccfe0] hover:text-[#002e6e]; }
+  .btn-ghost { @apply btn text-ink-700 hover:bg-[#e8f9fd] hover:text-[#002e6e]; }
   .btn-danger { @apply btn bg-rose-600 text-white hover:bg-rose-700; }
-  .input { @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200; }
+  .input { @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:border-[#4ccfe0] focus:outline-none focus:ring-2 focus:ring-[#4ccfe0]/30; }
   .pill { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
   .mono { @apply font-mono text-[12.5px]; }
 }

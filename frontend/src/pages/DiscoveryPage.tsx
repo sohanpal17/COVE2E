@@ -56,7 +56,7 @@ function Chips({ options, value, onChange }: { options: { value: string; label: 
       {options.map((o) => {
         const on = value.includes(o.value)
         return (
-          <button type="button" key={o.value} onClick={() => toggle(o.value)} className={`rounded-full border px-3 py-1 text-xs font-medium transition ${on ? 'border-brand-500 bg-brand-600 text-white' : 'border-ink-200 bg-white text-ink-700 hover:border-brand-300'}`}>
+          <button type="button" key={o.value} onClick={() => toggle(o.value)} className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${on ? 'border-[#4ccfe0] bg-[#4ccfe0] text-[#002e6e] shadow-xs' : 'border-ink-200 bg-white text-ink-700 hover:border-[#4ccfe0] hover:text-[#002e6e]'}`}>
             {o.label}
           </button>
         )

@@ -292,7 +292,7 @@ export default function JourneyInvestigationPage() {
                 run(message.trim() || null)
               }}
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white"><Bot className="h-4 w-4" /></div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4ccfe0] text-[#002e6e] shadow-xs"><Bot className="h-4 w-4" /></div>
               <button type="button" onClick={toggleMic} disabled={!voice.supported || voice.busy || running} title={t('ask.mic')} className={`btn-secondary !px-3 ${voice.recording ? 'animate-pulse border-rose-300 text-rose-600' : ''}`}>
                 {voice.busy ? <Spinner /> : voice.recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
@@ -313,7 +313,7 @@ export default function JourneyInvestigationPage() {
             <>
               {/* Explanation bubble */}
               <div className="flex gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white"><Bot className="h-4 w-4" /></div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4ccfe0] text-[#002e6e] shadow-xs"><Bot className="h-4 w-4" /></div>
                 <div className="flex-1 rounded-2xl rounded-tl-sm border border-ink-200 bg-white px-4 py-3 shadow-card">
                   <p className="whitespace-pre-line text-sm text-ink-900">{result.explanation}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">

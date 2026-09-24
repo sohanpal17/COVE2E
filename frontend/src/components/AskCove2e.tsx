@@ -73,14 +73,14 @@ export default function AskCove2e({ greeting, suggestions = DEFAULT_SUGGESTIONS,
       <div className="scrollbar-thin flex-1 space-y-3 overflow-y-auto pr-1">
         {greeting && msgs.length === 0 && (
           <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white"><Bot className="h-4 w-4" /></div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-xs" style={{ backgroundColor: '#4ccfe0', color: '#002e6e' }}><Bot className="h-4 w-4" /></div>
             <div className="max-w-[85%] whitespace-pre-line rounded-2xl rounded-tl-sm bg-ink-100 px-4 py-3 text-sm text-ink-900">{greeting}</div>
           </div>
         )}
         {msgs.map((m, i) => (
           <div key={i} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : ''}`}>
-            {m.role === 'assistant' && <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white"><Bot className="h-4 w-4" /></div>}
-            <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${m.role === 'user' ? 'rounded-tr-sm bg-brand-600 text-white' : 'rounded-tl-sm bg-ink-100 text-ink-900'}`}>
+            {m.role === 'assistant' && <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-xs" style={{ backgroundColor: '#4ccfe0', color: '#002e6e' }}><Bot className="h-4 w-4" /></div>}
+            <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${m.role === 'user' ? 'rounded-tr-sm bg-[#4ccfe0] text-[#002e6e] font-semibold shadow-xs' : 'rounded-tl-sm bg-ink-100 text-ink-900'}`}>
               <div className="whitespace-pre-line">{m.text}</div>
               {m.response && (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -88,7 +88,7 @@ export default function AskCove2e({ greeting, suggestions = DEFAULT_SUGGESTIONS,
                   <Badge tone={m.response.source === 'AI' ? 'purple' : 'blue'}>{m.response.source === 'AI' ? 'Sarvam AI' : 'Deterministic'}</Badge>
                   <button className="text-ink-500 hover:text-brand-600" title="Speak" onClick={() => speak(m.text, lang)}><Volume2 className="h-3.5 w-3.5" /></button>
                   {m.response.navigate_to && (
-                    <button className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline" onClick={() => navigate(m.response!.navigate_to!)}>
+                    <button className="inline-flex items-center gap-1 text-xs font-semibold text-[#002e6e] hover:underline" onClick={() => navigate(m.response!.navigate_to!)}>
                       {t('common.open')} <ArrowRight className="h-3 w-3" />
                     </button>
                   )}
@@ -99,7 +99,7 @@ export default function AskCove2e({ greeting, suggestions = DEFAULT_SUGGESTIONS,
         ))}
         {busy && (
           <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white"><Bot className="h-4 w-4" /></div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-xs" style={{ backgroundColor: '#4ccfe0', color: '#002e6e' }}><Bot className="h-4 w-4" /></div>
             <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm bg-ink-100 px-4 py-3 text-sm text-ink-600"><Spinner /> Understanding → investigating → reasoning…</div>
           </div>
         )}
@@ -110,8 +110,8 @@ export default function AskCove2e({ greeting, suggestions = DEFAULT_SUGGESTIONS,
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {suggestions.map((s) => (
-          <button key={s.label} className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs font-medium text-ink-700 hover:border-brand-300 hover:text-brand-700" onClick={() => (s.message ? send(s.message) : s.link && navigate(s.link))}>
-            <Sparkles className="mr-1 inline h-3 w-3 text-brand-500" />
+          <button key={s.label} className="rounded-full border border-ink-200 bg-white px-3 py-1 text-xs font-medium text-ink-700 hover:border-[#4ccfe0] hover:bg-[#e8f9fd] hover:text-[#002e6e] transition" onClick={() => (s.message ? send(s.message) : s.link && navigate(s.link))}>
+            <Sparkles className="mr-1 inline h-3 w-3 text-[#002e6e]" />
             {s.label}
           </button>
         ))}

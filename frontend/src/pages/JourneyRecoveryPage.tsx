@@ -29,7 +29,7 @@ function SourceBadge({ source }: { source: 'AI' | 'DETERMINISTIC' | string }) {
 function Bubble({ text, source, tone = 'default' }: { text: string; source?: string; tone?: 'default' | 'success' }) {
   return (
     <div className="flex gap-3">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white ${tone === 'success' ? 'bg-emerald-600' : 'bg-brand-600'}`}><Bot className="h-4 w-4" /></div>
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone === 'success' ? 'bg-emerald-600 text-white' : 'bg-[#4ccfe0] text-[#002e6e] shadow-xs'}`}><Bot className="h-4 w-4" /></div>
       <div className={`flex-1 rounded-2xl rounded-tl-sm border px-4 py-3 shadow-card ${tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-ink-200 bg-white'}`}>
         <p className="whitespace-pre-line text-sm text-ink-900">{text}</p>
         {source && <div className="mt-2"><SourceBadge source={source} /></div>}
