@@ -89,8 +89,6 @@ Copy `backend/.env.example` → `backend/.env`:
 | `JWT_SECRET`, `JWT_EXPIRE_MINUTES` | Demo auth. |
 | `DEMO_MODE`, `APP_ENV`, `CORS_ORIGINS`, `UPLOAD_DIR`, `MAX_UPLOAD_MB` | App behaviour. |
 
-No Claude/Anthropic keys are used anywhere.
-
 ## 6. Local setup (fastest path)
 
 ```bash
@@ -230,7 +228,7 @@ Specialised prompts live in `backend/app/agents/*`; there is no single giant pro
 * Readiness % is completeness, never approval probability. Product language avoids guarantees.
 * Backend is the security boundary: JWT auth, per-user data isolation, file type/size validation, CORS, audit log, no keys in the frontend.
 
-## 18. Sponsor integrations
+## 18. Technology integrations
 
 * **Sarvam AI** — conversation, reasoning, multilingual (hi/mr), STT, TTS.
 * **Cognee** — policy knowledge graph (with mandatory local fallback).
