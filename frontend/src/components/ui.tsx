@@ -45,7 +45,7 @@ const TONES: Record<string, string> = {
   green: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
   amber: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
   red: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
-  blue: 'bg-brand-50 text-brand-700 ring-1 ring-brand-200',
+  blue: 'bg-brand-50 text-brand-800 ring-1 ring-brand-200',
   gray: 'bg-ink-100 text-ink-700 ring-1 ring-ink-200',
   purple: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
 }
@@ -107,7 +107,7 @@ export function StatePill({ state }: { state?: string | null }) {
 }
 
 export function ProgressBar({ value, tone = 'brand', className = '' }: { value: number; tone?: 'brand' | 'green' | 'amber' | 'red'; className?: string }) {
-  const color = { brand: 'bg-brand-600', green: 'bg-emerald-500', amber: 'bg-amber-500', red: 'bg-rose-500' }[tone]
+  const color = { brand: 'bg-brand-400', green: 'bg-emerald-500', amber: 'bg-amber-500', red: 'bg-rose-500' }[tone]
   return (
     <div className={`h-2 w-full overflow-hidden rounded-full bg-ink-100 ${className}`}>
       <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />

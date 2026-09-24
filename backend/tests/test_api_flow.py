@@ -56,6 +56,33 @@ def test_policy_upload(auth_client):
     assert body["policy_number"] == "AHI-IND-2026-55710"
     assert body["sum_insured"] == 500_000
     assert body["knowledge_indexed"] is True
+    assert body["is_demo"] is False
+
+
+def test_policy_delete(auth_client):
+    from pathlib import Path
+
+    # 1. Deleting a mock policy should be forbidden
+    ids = _load_demo(auth_client)
+    mock_id = ids["policy_id"]
+    r = auth_client.delete(f"/api/policies/{mock_id}")
+    assert r.status_code == 400
+    assert "Mock policies cannot be deleted" in r.json()["detail"]
+
+    # 2. Upload a custom policy and delete it
+    text = Path(__file__).resolve().parents[2] / "mock-data" / "policies" / "health_b.txt"
+    r = auth_client.post("/api/policies/upload", files={"file": ("health_b.txt", text.read_bytes(), "text/plain")})
+    assert r.status_code == 200
+    custom_id = r.json()["id"]
+
+    # Delete custom policy
+    del_r = auth_client.delete(f"/api/policies/{custom_id}")
+    assert del_r.status_code == 200, del_r.text
+
+    # Verify policy no longer exists
+    get_r = auth_client.get(f"/api/policies/{custom_id}")
+    assert get_r.status_code == 404
+
 
 
 def test_incident_claim_documents_readiness_submit(auth_client):

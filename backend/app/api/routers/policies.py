@@ -44,3 +44,10 @@ def reindex(policy_id: str, user: User = Depends(get_current_user), db: Session 
     policy_service.index_policy(db, policy)
     db.commit()
     return policy_service.to_summary(policy)
+
+
+@router.delete("/{policy_id}")
+def delete_policy(policy_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    policy_service.delete_policy(db, user, policy_id)
+    return {"status": "ok", "message": "Policy deleted successfully"}
+

@@ -12,7 +12,7 @@ export interface PolicySummary {
   id: string; policy_number: string; insurer: string; policy_type: string; plan_name: string; holder_name: string
   sum_insured: number; premium: number; start_date: string | null; end_date: string | null; deductible: number
   waiting_period_days: number; claim_types: string[]; status: string; knowledge_indexed: boolean; knowledge_backend: string
-  days_to_expiry: number | null
+  days_to_expiry: number | null; is_demo?: boolean
 }
 export interface PolicyDetail extends PolicySummary {
   insured_members: string[]; structured_profile: Record<string, any>; coverages: PolicyCoverageOut[]; conditions: PolicyConditionOut[]; source_file: string | null

@@ -57,6 +57,12 @@ def on_startup() -> None:
     # Alembic owns the schema in production; for local/demo convenience we also create missing tables.
     if not settings.is_production:
         Base.metadata.create_all(bind=engine)
+        with engine.begin() as conn:
+            from sqlalchemy import text
+            try:
+                conn.execute(text("ALTER TABLE policies ADD COLUMN is_demo BOOLEAN DEFAULT 0"))
+            except Exception:
+                pass
     with SessionLocal() as db:
         from app.services.demo_service import ensure_demo_user, ensure_products
 

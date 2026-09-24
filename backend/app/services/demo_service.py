@@ -104,7 +104,7 @@ def _seed_policy(db: Session, user: User, rel: str, product_code: str) -> Policy
     text = _read(f"policies/{rel}")
     profile = parse_policy_text(text)
     product = db.query(InsuranceProduct).filter(InsuranceProduct.code == product_code).first()
-    policy = policy_service.create_policy_from_profile(db, user, profile, text=text, source_file=f"mock-data/policies/{rel}", product_id=product.id if product else None)
+    policy = policy_service.create_policy_from_profile(db, user, profile, text=text, source_file=f"mock-data/policies/{rel}", product_id=product.id if product else None, is_demo=True)
     policy_service.index_policy(db, policy)
     return policy
 

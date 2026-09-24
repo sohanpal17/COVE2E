@@ -58,7 +58,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col bg-ink-50">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white"><ShieldCheck className="h-5 w-5" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl shadow-sm" style={{ backgroundColor: '#4ccfe0', color: '#002e6e' }}><ShieldCheck className="h-5 w-5 stroke-[2.5]" /></div>
           <div>
             <div className="text-base font-bold leading-none text-ink-950">COVE2E</div>
             <div className="text-[11px] text-ink-500">{t('app.tagline')}</div>
@@ -83,7 +83,7 @@ export default function LoginPage() {
                   onClick={() => choose(a)}
                   className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${active ? 'border-brand-400 bg-brand-50 ring-2 ring-brand-100' : 'border-ink-200 bg-white hover:border-brand-200'}`}
                 >
-                  <UserCircle2 className={`h-8 w-8 ${active ? 'text-brand-600' : 'text-ink-300'}`} />
+                  <UserCircle2 className={`h-8 w-8 ${active ? 'text-brand-800' : 'text-ink-300'}`} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 text-sm font-semibold text-ink-900">
                       {a.name}
@@ -92,7 +92,7 @@ export default function LoginPage() {
                     <div className="text-xs text-ink-500">{a.hint}</div>
                   </div>
                   <Badge tone={active ? 'blue' : 'gray'}>{a.langLabel}</Badge>
-                  {active && <Check className="h-4 w-4 text-brand-600" />}
+                  {active && <Check className="h-4 w-4 text-brand-800" />}
                 </button>
               )
             })}
@@ -101,7 +101,7 @@ export default function LoginPage() {
           <label className="mt-4 flex items-start gap-2 rounded-lg bg-ink-50 p-3 text-sm text-ink-700">
             <input type="checkbox" className="mt-0.5" checked={loadDemo} disabled={busy} onChange={(e) => setLoadDemo(e.target.checked)} />
             <span>
-              <span className="flex items-center gap-1.5 font-medium text-ink-900"><Database className="h-3.5 w-3.5 text-brand-600" /> Load Recovery Demo data after login</span>
+              <span className="flex items-center gap-1.5 font-medium text-ink-900"><Database className="h-3.5 w-3.5 text-brand-800" /> Load Recovery Demo data after login</span>
               <span className="text-xs text-ink-500">Seeds a health policy, a claim stuck in DOCUMENT_PENDING for 8 days, documents, timeline and an open insurer query.</span>
             </span>
           </label>

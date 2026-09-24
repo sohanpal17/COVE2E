@@ -26,7 +26,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gradient-to-b from-white via-ink-50 to-ink-50">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white"><ShieldCheck className="h-5 w-5" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl shadow-sm" style={{ backgroundColor: '#4ccfe0', color: '#002e6e' }}><ShieldCheck className="h-5 w-5 stroke-[2.5]" /></div>
           <div>
             <div className="text-base font-bold leading-none text-ink-950">COVE2E</div>
             <div className="text-[11px] text-ink-500">{t('app.tagline')}</div>
@@ -43,7 +43,7 @@ export default function LandingPage() {
           <div className="lg:col-span-3">
             <Badge tone="blue" className="mb-4">Paytm Build for AI · Insurance Journey Intelligence</Badge>
             <h1 className="text-4xl font-bold leading-tight text-ink-950 sm:text-5xl">
-              COVE2E <span className="text-ink-400">·</span> <span className="text-brand-700">{t('app.tagline')}</span>
+              COVE2E <span className="text-ink-400">·</span> <span style={{ color: '#0993a6' }} className="font-extrabold">{t('app.tagline')}</span>
             </h1>
             <p className="mt-4 max-w-xl text-lg text-ink-700">{t('app.promise')}</p>
             <p className="mt-3 max-w-xl text-sm text-ink-500">
@@ -61,7 +61,7 @@ export default function LandingPage() {
               <ol className="mt-3 space-y-2">
                 {LOOP.map((step, i) => (
                   <li key={step} className="flex items-center gap-3 text-sm">
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${i === 3 ? 'bg-amber-400 text-white' : 'bg-brand-600 text-white'}`}>{i + 1}</span>
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-cyan-950" style={{ backgroundColor: i === 3 ? '#fbbf24' : '#4ccfe0', color: i === 3 ? '#ffffff' : '#07333d' }}>{i + 1}</span>
                     <span className="font-medium text-ink-900">{step}</span>
                     {i === 3 && <Badge tone="amber">permission</Badge>}
                   </li>
@@ -75,7 +75,7 @@ export default function LandingPage() {
           <div className="flex min-w-max items-center gap-2">
             {LOOP.map((step, i) => (
               <React.Fragment key={step}>
-                <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${i === 3 ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'}`}>{step}</div>
+                <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${i === 3 ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-brand-50 text-brand-800 ring-1 ring-brand-200'}`}>{step}</div>
                 {i < LOOP.length - 1 && <ArrowRight className="h-4 w-4 shrink-0 text-ink-300" />}
               </React.Fragment>
             ))}
@@ -84,13 +84,13 @@ export default function LandingPage() {
 
         <section className="mt-10">
           <div className="mb-4 flex items-center gap-2">
-            <Search className="h-4 w-4 text-brand-600" />
+            <Search className="h-4 w-4 text-brand-800" />
             <h2 className="text-lg font-bold text-ink-950">Key capabilities</h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CAPABILITIES.map((c) => (
               <div key={c.title} className="card card-pad transition hover:shadow-lift">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-700"><c.icon className="h-5 w-5" /></div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-800"><c.icon className="h-5 w-5" /></div>
                 <h3 className="mt-3 text-sm font-semibold text-ink-900">{c.title}</h3>
                 <p className="mt-1 text-xs leading-relaxed text-ink-500">{c.body}</p>
               </div>

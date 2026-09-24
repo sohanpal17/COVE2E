@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Brain, FilePlus2, MessageSquare, RefreshCw } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Brain, FilePlus2, MessageSquare, RefreshCw, Trash2 } from 'lucide-react'
 import { api, errorMessage } from '../services/api'
 import { useI18n } from '../i18n'
 import { fmtDate, inr, titleCase } from '../utils/format'
@@ -43,8 +43,17 @@ export default function PolicyDetailsPage() {
   const { id = '' } = useParams()
   const { t } = useI18n()
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('coverage')
   const { data, isLoading, error, refetch, isRefetching } = useQuery({ queryKey: ['policy', id], queryFn: () => api.policy(id), enabled: !!id })
+
+  const deletePolicy = useMutation({
+    mutationFn: (policyId: string) => api.deletePolicy(policyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['policies'] })
+      navigate('/policies')
+    },
+  })
 
   if (isLoading) return <Loading label={t('common.loading')} />
   if (error || !data) return <ErrorBox message={errorMessage(error)} />
@@ -86,6 +95,19 @@ export default function PolicyDetailsPage() {
           <>
             <button className="btn-secondary" onClick={() => navigate(`/policies/${id}/companion`)}><MessageSquare className="h-4 w-4" /> Open {t('policy.companion')}</button>
             <button className="btn-primary" onClick={() => navigate(`/claims/new?policy_id=${id}`)}><FilePlus2 className="h-4 w-4" /> Start a claim on this policy</button>
+            {!data.is_demo && (
+              <button
+                className="btn-secondary text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this policy?')) {
+                    deletePolicy.mutate(id)
+                  }
+                }}
+                disabled={deletePolicy.isPending}
+              >
+                <Trash2 className="h-4 w-4" /> Delete Policy
+              </button>
+            )}
           </>
         }
       />

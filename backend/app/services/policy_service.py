@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.enums import Actor, AuditAction
 from app.integrations.document_extractor import ALLOWED_EXT, extract_text
-from app.models import Policy, PolicyCondition, PolicyCoverage, User
+from app.models import Claim, Journey, Policy, PolicyCondition, PolicyCoverage, User
 from app.schemas.api import PolicyDetail, PolicySummary
 from app.services.audit_service import record_audit
 from app.services.policy_knowledge import get_policy_knowledge_service
@@ -28,6 +28,31 @@ def get_policy(db: Session, user: User, policy_id: str) -> Policy:
     return policy
 
 
+def delete_policy(db: Session, user: User, policy_id: str) -> None:
+    policy = get_policy(db, user, policy_id)
+    if policy.is_mock:
+        raise HTTPException(status_code=400, detail="Mock policies cannot be deleted.")
+
+    # Clean up any claims and journeys associated with this policy
+    claims = db.query(Claim).filter(Claim.policy_id == policy.id).all()
+    for claim in claims:
+        db.delete(claim)
+
+    journeys = db.query(Journey).filter(Journey.policy_id == policy.id).all()
+    for journey in journeys:
+        db.delete(journey)
+
+    if policy.source_file and os.path.exists(policy.source_file) and "mock-data" not in policy.source_file:
+        try:
+            os.remove(policy.source_file)
+        except Exception:
+            pass
+
+    record_audit(db, AuditAction.POLICY_DELETED, actor=Actor.USER, user_id=user.id, metadata={"policy_id": policy.id})
+    db.delete(policy)
+    db.commit()
+
+
 def days_to_expiry(policy: Policy) -> Optional[int]:
     if not policy.end_date:
         return None
@@ -38,12 +63,14 @@ def days_to_expiry(policy: Policy) -> Optional[int]:
 def to_summary(policy: Policy) -> PolicySummary:
     s = PolicySummary.model_validate(policy)
     s.days_to_expiry = days_to_expiry(policy)
+    s.is_demo = policy.is_mock
     return s
 
 
 def to_detail(policy: Policy) -> PolicyDetail:
     d = PolicyDetail.model_validate(policy)
     d.days_to_expiry = days_to_expiry(policy)
+    d.is_demo = policy.is_mock
     return d
 
 
@@ -68,10 +95,11 @@ def validate_file(file_name: str, size: int) -> None:
         raise HTTPException(status_code=400, detail="Empty file")
 
 
-def create_policy_from_profile(db: Session, user: User, profile: Dict[str, Any], *, text: str = "", source_file: Optional[str] = None, product_id: Optional[str] = None) -> Policy:
+def create_policy_from_profile(db: Session, user: User, profile: Dict[str, Any], *, text: str = "", source_file: Optional[str] = None, product_id: Optional[str] = None, is_demo: bool = False) -> Policy:
     policy = Policy(
         user_id=user.id,
         product_id=product_id,
+        is_demo=is_demo,
         policy_number=profile.get("policy_number") or f"POL-{uuid.uuid4().hex[:8].upper()}",
         insurer=profile.get("insurer") or "Unknown insurer",
         policy_type=profile.get("policy_type", "HEALTH"),

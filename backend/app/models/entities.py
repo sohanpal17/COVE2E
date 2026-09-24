@@ -98,9 +98,16 @@ class Policy(Base, TimestampMixin):
     knowledge_indexed: Mapped[bool] = mapped_column(Boolean, default=False)
     knowledge_backend: Mapped[str] = mapped_column(String(32), default="local")
 
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+
     user: Mapped["User"] = relationship(back_populates="policies")
     coverages: Mapped[List["PolicyCoverage"]] = relationship(back_populates="policy", cascade="all, delete-orphan")
     conditions: Mapped[List["PolicyCondition"]] = relationship(back_populates="policy", cascade="all, delete-orphan")
+
+    @property
+    def is_mock(self) -> bool:
+        return self.is_demo or self.product_id is not None or bool(self.source_file and "mock-data" in self.source_file)
+
 
 
 class PolicyCoverage(Base):

@@ -54,6 +54,7 @@ export const api = {
   // policies
   policies: () => http.get<T.PolicySummary[]>('/api/policies').then((r) => r.data),
   policy: (id: string) => http.get<T.PolicyDetail>(`/api/policies/${id}`).then((r) => r.data),
+  deletePolicy: (id: string) => http.delete<{ status: string; message: string }>(`/api/policies/${id}`).then((r) => r.data),
   uploadPolicy: (file: File) => {
     const fd = new FormData()
     fd.append('file', file)

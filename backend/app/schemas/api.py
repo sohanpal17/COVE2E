@@ -81,6 +81,7 @@ class PolicySummary(ORMModel):
     knowledge_indexed: bool
     knowledge_backend: str
     days_to_expiry: Optional[int] = None
+    is_demo: bool = False
 
 
 class PolicyDetail(PolicySummary):

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, FileText, FileUp, Lightbulb, MessageSquare, ShieldCheck } from 'lucide-react'
+import { Check, FileText, FileUp, Lightbulb, MessageSquare, ShieldCheck, Trash2 } from 'lucide-react'
 import { api, errorMessage } from '../services/api'
 import { useI18n } from '../i18n'
 import { fmtDate, inr, sleep } from '../utils/format'
@@ -18,6 +18,13 @@ export default function PoliciesPage() {
   const [dragging, setDragging] = useState(false)
   const [step, setStep] = useState(-1) // index of the step currently running; PIPELINE.length = all done
   const [fileName, setFileName] = useState<string | null>(null)
+
+  const deletePolicy = useMutation({
+    mutationFn: (id: string) => api.deletePolicy(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['policies'] })
+    },
+  })
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
@@ -94,12 +101,30 @@ export default function PoliciesPage() {
                 <div><div className="label">Deductible</div><div className="text-sm font-semibold text-ink-900">{inr(p.deductible)}</div></div>
                 <div><div className="label">Waiting period</div><div className="text-sm font-semibold text-ink-900">{p.waiting_period_days} days</div></div>
               </div>
-              <div className="mt-4 flex gap-2">
-                <Link to={`/policies/${p.id}`} className="btn-secondary"><FileText className="h-4 w-4" /> Details</Link>
-                <Link to={`/policies/${p.id}/companion`} className="btn-primary"><MessageSquare className="h-4 w-4" /> Ask</Link>
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <div className="flex gap-2">
+                  <Link to={`/policies/${p.id}`} className="btn-secondary"><FileText className="h-4 w-4" /> Details</Link>
+                  <Link to={`/policies/${p.id}/companion`} className="btn-primary"><MessageSquare className="h-4 w-4" /> Ask</Link>
+                </div>
+                {!p.is_demo && (
+                  <button
+                    type="button"
+                    className="btn-secondary text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this policy?')) {
+                        deletePolicy.mutate(p.id)
+                      }
+                    }}
+                    disabled={deletePolicy.isPending}
+                    title="Delete uploaded policy"
+                  >
+                    <Trash2 className="h-4 w-4" /> Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}
+          {deletePolicy.error && <ErrorBox message={errorMessage(deletePolicy.error)} />}
         </div>
 
         <div className="space-y-4">
