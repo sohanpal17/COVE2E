@@ -228,7 +228,7 @@ Specialised prompts live in `backend/app/agents/*`; there is no single giant pro
 * Readiness % is completeness, never approval probability. Product language avoids guarantees.
 * Backend is the security boundary: JWT auth, per-user data isolation, file type/size validation, CORS, audit log, no keys in the frontend.
 
-## 18. Sponsor integrations
+## 18. Technology integrations
 
 * **Sarvam AI** — conversation, reasoning, multilingual (hi/mr), STT, TTS.
 * **Cognee** — policy knowledge graph (with mandatory local fallback).
